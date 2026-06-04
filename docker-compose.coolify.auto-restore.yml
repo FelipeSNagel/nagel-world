@@ -81,6 +81,32 @@ services:
       SIMULATION_DISTANCE: "${CRAFT_SIMULATION_DISTANCE:-6}"
       ENABLE_RCON: "true"
       RCON_PASSWORD: "${CRAFT_RCON_PASSWORD:-troque-essa-senha}"
+      RCON_CMDS_STARTUP: |-
+        lp group default permission set essentials.help true
+        lp group default permission set essentials.spawn true
+        lp group default permission set essentials.sethome true
+        lp group default permission set essentials.home true
+        lp group default permission set essentials.delhome true
+        lp group default permission set essentials.tpa true
+        lp group default permission set essentials.tpahere true
+        lp group default permission set essentials.tpaccept true
+        lp group default permission set essentials.tpdeny true
+        lp group default permission set essentials.balance true
+        lp group default permission set essentials.pay true
+        lp group default permission set essentials.balancetop true
+        lp group default permission set essentials.msg true
+        lp group default permission set essentials.warp true
+        lp group default permission set essentials.warps.* true
+        lp group default permission set griefprevention.createclaims true
+        lp group default permission set griefprevention.claims true
+        lp group default permission set quickshop.use true
+        lp group default permission set quickshop.create.sell true
+        lp group default permission set quickshop.create.buy true
+        lp group default permission set quickshop.create.changeprice true
+        lp group default permission set quickshop.create.changeamount true
+        lp group default permission set quickshop.create.double true
+        lp group default permission set quickshop.create.stacks true
+        lp group default permission set quickshop.find true
       MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
       MODRINTH_PROJECTS: |
         luckperms
