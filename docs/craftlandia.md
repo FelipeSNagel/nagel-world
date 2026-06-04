@@ -68,6 +68,7 @@ Isso libera para jogadores comuns:
 - `/sethome`, `/home`, `/delhome`
 - `/tpa`, `/tpaccept`, `/tpdeny`
 - `/balance`, `/pay`, `/balancetop`
+- `/worth`, `/sell hand`, `/sell all`, `/sell inventory`
 - claims do GriefPrevention
 - comandos basicos do QuickShop, se ele estiver carregado
 
@@ -100,7 +101,15 @@ EssentialsX fornece a economia base:
 /balance
 /pay Nome valor
 /balancetop
+/worth
+/sell hand
+/sell all
+/sell inventory
 ```
+
+O `/sell` vende itens para o servidor usando a tabela
+`plugins/Essentials/worth.yml`. Essa e a entrada inicial de dinheiro: minerar,
+farmar e vender itens ao servidor.
 
 QuickShop-Hikari, quando carregado, permite criar lojas em bau. Em geral, o
 jogador coloca um bau, segura o item e usa o fluxo do plugin para definir preco.

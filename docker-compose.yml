@@ -74,6 +74,11 @@ services:
         lp group default permission set essentials.balance true
         lp group default permission set essentials.pay true
         lp group default permission set essentials.balancetop true
+        lp group default permission set essentials.sell true
+        lp group default permission set essentials.sell.hand true
+        lp group default permission set essentials.sell.all true
+        lp group default permission set essentials.sell.inventory true
+        lp group default permission set essentials.worth true
         lp group default permission set essentials.msg true
         lp group default permission set essentials.warp true
         lp group default permission set essentials.warps.* true
