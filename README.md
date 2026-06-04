@@ -94,6 +94,9 @@ usam a porta Bedrock UDP `19132`.
 Detalhes do modo Craftlandia/Paper ficam em
 [docs/craftlandia.md](docs/craftlandia.md).
 
+Checklist curto para restaurar na VPS/Coolify pelo Git:
+[docs/restore-amanha.md](docs/restore-amanha.md).
+
 Para liberar somente jogadores especificos no Craftlandia/Paper:
 
 ```bash
