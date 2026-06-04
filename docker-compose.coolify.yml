@@ -105,4 +105,3 @@ services:
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
     volumes:
       - /data/minecraft-nagel/craftlandia-data:/data
-      - ./config/craftlandia/commands.yml:/data/commands.yml:ro
