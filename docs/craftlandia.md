@@ -65,12 +65,44 @@ make craft-setup-perms
 Isso libera para jogadores comuns:
 
 - `/spawn`
+- `/mercado`, `/loja`
 - `/sethome`, `/home`, `/delhome`
 - `/tpa`, `/tpaccept`, `/tpdeny`
 - `/balance`, `/pay`, `/balancetop`
 - `/worth`, `/sell hand`, `/sell all`, `/sell inventory`
+- aliases em portugues: `/saldo`, `/dinheiro`, `/pagar`, `/preco`,
+  `/vender`, `/vendermao`, `/vendertudo`, `/venderinventario`
 - claims do GriefPrevention
 - comandos basicos do QuickShop, se ele estiver carregado
+
+## Mercado
+
+O deploy cria um warp chamado `mercado` e aliases:
+
+```text
+/mercado
+/loja
+```
+
+Eles levam para uma plataforma de mercado em `x=0, y=90, z=0`. O startup do
+servidor tambem cria bancas simples nessa area com blocos, barrels e teto
+colorido.
+
+Comandos de venda em portugues:
+
+```text
+/vender
+/vendermao
+/vendertudo
+/venderinventario
+/preco
+/saldo
+/dinheiro
+/pagar Nome valor
+```
+
+Observacao: aliases do `commands.yml` do Paper nao traduzem subcomandos. Por
+isso usamos `/vendertudo` em vez de `/vender tudo`.
 
 ## Protecao de terreno
 

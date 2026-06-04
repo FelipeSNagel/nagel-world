@@ -7,6 +7,7 @@ services:
       RCLONE_CONFIG_B64: "${RCLONE_CONFIG_B64:?Configure RCLONE_CONFIG_B64 in Coolify}"
       CRAFT_CLOUD_REMOTE: "${CRAFT_CLOUD_REMOTE:-gdrive}"
       CRAFT_CLOUD_PATH: "${CRAFT_CLOUD_PATH:-minecraft-nagel/craftlandia-backups}"
+      CRAFT_LEVEL_NAME: "${CRAFT_LEVEL_NAME:-CraftlandiaWorld}"
       RESTORE_MODE: "${RESTORE_MODE:-once}"
     command: |
       set -eu
@@ -21,6 +22,11 @@ services:
 
       mkdir -p "$$RCLONE_CONFIG_DIR" "$$BACKUP_DIR"
       printf '%s' "$$RCLONE_CONFIG_B64" | base64 -d > "$$RCLONE_CONFIG_FILE"
+
+      if [ -d "$$DATA_DIR" ]; then
+        mkdir -p "$$DATA_DIR/plugins/Essentials/warps"
+        printf 'world: %s\nx: 0.5\ny: 90.0\nz: 0.5\nyaw: 180.0\npitch: 0.0\nname: mercado\n' "$$CRAFT_LEVEL_NAME" > "$$DATA_DIR/plugins/Essentials/warps/mercado.yml"
+      fi
 
       if [ "$$RESTORE_MODE" != "force" ] && [ -f "$$MARKER" ]; then
         echo "Backup already restored. Set RESTORE_MODE=force to restore again."
@@ -45,6 +51,8 @@ services:
 
       echo "Restoring $$latest"
       tar -C "$$DATA_ROOT" -xzf "$$BACKUP_DIR/$$latest"
+      mkdir -p "$$DATA_DIR/plugins/Essentials/warps"
+      printf 'world: %s\nx: 0.5\ny: 90.0\nz: 0.5\nyaw: 180.0\npitch: 0.0\nname: mercado\n' "$$CRAFT_LEVEL_NAME" > "$$DATA_DIR/plugins/Essentials/warps/mercado.yml"
       chown -R 1000:1000 "$$DATA_DIR" 2>/dev/null || true
       date -u +"%Y-%m-%dT%H:%M:%SZ $$latest" > "$$MARKER"
 
@@ -102,6 +110,7 @@ services:
         lp group default permission set essentials.msg true
         lp group default permission set essentials.warp true
         lp group default permission set essentials.warps.* true
+        lp group default permission set essentials.warps.mercado true
         lp group default permission set griefprevention.createclaims true
         lp group default permission set griefprevention.claims true
         lp group default permission set quickshop.use true
@@ -112,6 +121,39 @@ services:
         lp group default permission set quickshop.create.double true
         lp group default permission set quickshop.create.stacks true
         lp group default permission set quickshop.find true
+        fill -12 90 -12 12 98 12 air
+        fill -12 89 -12 12 89 12 stone_bricks
+        fill -12 90 -12 12 90 -12 oak_fence
+        fill -12 90 12 12 90 12 oak_fence
+        fill -12 90 -12 -12 90 12 oak_fence
+        fill 12 90 -12 12 90 12 oak_fence
+        setblock 0 90 -12 air
+        fill -10 90 -8 -5 90 -4 spruce_planks
+        fill -10 91 -8 -10 93 -8 oak_fence
+        fill -5 91 -8 -5 93 -8 oak_fence
+        fill -10 91 -4 -10 93 -4 oak_fence
+        fill -5 91 -4 -5 93 -4 oak_fence
+        fill -10 94 -8 -5 94 -4 red_wool
+        setblock -8 90 -5 barrel[facing=south]
+        fill 5 90 -8 10 90 -4 spruce_planks
+        fill 5 91 -8 5 93 -8 oak_fence
+        fill 10 91 -8 10 93 -8 oak_fence
+        fill 5 91 -4 5 93 -4 oak_fence
+        fill 10 91 -4 10 93 -4 oak_fence
+        fill 5 94 -8 10 94 -4 blue_wool
+        setblock 8 90 -5 barrel[facing=south]
+        fill -3 90 5 3 90 10 spruce_planks
+        fill -3 91 5 -3 93 5 oak_fence
+        fill 3 91 5 3 93 5 oak_fence
+        fill -3 91 10 -3 93 10 oak_fence
+        fill 3 91 10 3 93 10 oak_fence
+        fill -3 94 5 3 94 10 green_wool
+        setblock 0 90 7 barrel[facing=north]
+        setblock 0 90 0 emerald_block
+        setblock -11 90 -11 torch
+        setblock 11 90 -11 torch
+        setblock -11 90 11 torch
+        setblock 11 90 11 torch
       MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
       MODRINTH_PROJECTS: |
         luckperms
@@ -127,3 +169,4 @@ services:
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
     volumes:
       - /data/minecraft-nagel/craftlandia-data:/data
+      - ./config/craftlandia/commands.yml:/data/commands.yml:ro
