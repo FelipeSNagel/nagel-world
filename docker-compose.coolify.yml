@@ -1,0 +1,42 @@
+services:
+  craftlandia:
+    image: itzg/minecraft-server:java25
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    ports:
+      - "19132:19132/udp"
+    environment:
+      EULA: "TRUE"
+      TYPE: "PAPER"
+      VERSION: "LATEST"
+      VERSION_FROM_MODRINTH_PROJECTS: "true"
+      MEMORY: "${CRAFT_MEMORY:-2G}"
+      SERVER_NAME: "${CRAFT_SERVER_NAME:-Nagel Craftlandia}"
+      MOTD: "${CRAFT_MOTD:-Nagel Craftlandia}"
+      LEVEL: "${CRAFT_LEVEL_NAME:-CraftlandiaWorld}"
+      MODE: "${CRAFT_GAMEMODE:-survival}"
+      DIFFICULTY: "${CRAFT_DIFFICULTY:-normal}"
+      MAX_PLAYERS: "${CRAFT_MAX_PLAYERS:-20}"
+      ONLINE_MODE: "FALSE"
+      ENFORCE_SECURE_PROFILE: "FALSE"
+      SPAWN_PROTECTION: "0"
+      VIEW_DISTANCE: "${CRAFT_VIEW_DISTANCE:-10}"
+      SIMULATION_DISTANCE: "${CRAFT_SIMULATION_DISTANCE:-6}"
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: "${CRAFT_RCON_PASSWORD:-troque-essa-senha}"
+      MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
+      MODRINTH_PROJECTS: |
+        luckperms
+        essentialsx
+        essentialsx-spawn
+        griefprevention
+        vaultunlocked
+        viaversion
+        viabackwards
+        quickshop-hikari?
+      PLUGINS: |
+        https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
+        https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
+    volumes:
+      - /data/minecraft-nagel/craftlandia-data:/data

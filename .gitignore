@@ -1,0 +1,7 @@
+.env
+data/
+backups/
+craftlandia-data/
+craftlandia-backups/
+craftlandia-data.before-restore-*/
+.DS_Store

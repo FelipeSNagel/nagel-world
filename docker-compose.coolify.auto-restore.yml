@@ -1,0 +1,98 @@
+services:
+  restore-from-drive:
+    image: rclone/rclone:latest
+    restart: "no"
+    entrypoint: ["/bin/sh", "-lc"]
+    environment:
+      RCLONE_CONFIG_B64: "${RCLONE_CONFIG_B64:?Configure RCLONE_CONFIG_B64 in Coolify}"
+      CRAFT_CLOUD_REMOTE: "${CRAFT_CLOUD_REMOTE:-gdrive}"
+      CRAFT_CLOUD_PATH: "${CRAFT_CLOUD_PATH:-minecraft-nagel/craftlandia-backups}"
+      RESTORE_MODE: "${RESTORE_MODE:-once}"
+    command: |
+      set -eu
+
+      RCLONE_CONFIG_DIR="/config/rclone"
+      RCLONE_CONFIG_FILE="$$RCLONE_CONFIG_DIR/rclone.conf"
+      DATA_ROOT="/data-root"
+      DATA_DIR="$$DATA_ROOT/craftlandia-data"
+      BACKUP_DIR="$$DATA_ROOT/craftlandia-backups"
+      MARKER="$$DATA_ROOT/.nagel-restored-from-drive"
+      REMOTE="$${CRAFT_CLOUD_REMOTE}:$${CRAFT_CLOUD_PATH}"
+
+      mkdir -p "$$RCLONE_CONFIG_DIR" "$$BACKUP_DIR"
+      printf '%s' "$$RCLONE_CONFIG_B64" | base64 -d > "$$RCLONE_CONFIG_FILE"
+
+      if [ "$$RESTORE_MODE" != "force" ] && [ -f "$$MARKER" ]; then
+        echo "Backup already restored. Set RESTORE_MODE=force to restore again."
+        exit 0
+      fi
+
+      latest="$$(rclone --config "$$RCLONE_CONFIG_FILE" lsf "$$REMOTE" --files-only | grep '^craftlandia-[0-9]\{8\}-[0-9]\{6\}\.tar\.gz$$' | sort | tail -n 1)"
+
+      if [ -z "$$latest" ]; then
+        echo "No backup found in $$REMOTE"
+        exit 1
+      fi
+
+      echo "Downloading $$REMOTE/$$latest"
+      rclone --config "$$RCLONE_CONFIG_FILE" copyto "$$REMOTE/$$latest" "$$BACKUP_DIR/$$latest"
+
+      if [ -d "$$DATA_DIR" ]; then
+        safety_dir="$$DATA_DIR.before-restore-$$(date +%Y%m%d-%H%M%S)"
+        echo "Moving current data to $$safety_dir"
+        mv "$$DATA_DIR" "$$safety_dir"
+      fi
+
+      echo "Restoring $$latest"
+      tar -C "$$DATA_ROOT" -xzf "$$BACKUP_DIR/$$latest"
+      chown -R 1000:1000 "$$DATA_DIR" 2>/dev/null || true
+      date -u +"%Y-%m-%dT%H:%M:%SZ $$latest" > "$$MARKER"
+
+      echo "Restore complete."
+    volumes:
+      - /data/minecraft-nagel:/data-root
+
+  craftlandia:
+    image: itzg/minecraft-server:java25
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    depends_on:
+      restore-from-drive:
+        condition: service_completed_successfully
+    ports:
+      - "19132:19132/udp"
+    environment:
+      EULA: "TRUE"
+      TYPE: "PAPER"
+      VERSION: "LATEST"
+      VERSION_FROM_MODRINTH_PROJECTS: "true"
+      MEMORY: "${CRAFT_MEMORY:-2G}"
+      SERVER_NAME: "${CRAFT_SERVER_NAME:-Nagel Craftlandia}"
+      MOTD: "${CRAFT_MOTD:-Nagel Craftlandia}"
+      LEVEL: "${CRAFT_LEVEL_NAME:-CraftlandiaWorld}"
+      MODE: "${CRAFT_GAMEMODE:-survival}"
+      DIFFICULTY: "${CRAFT_DIFFICULTY:-normal}"
+      MAX_PLAYERS: "${CRAFT_MAX_PLAYERS:-20}"
+      ONLINE_MODE: "FALSE"
+      ENFORCE_SECURE_PROFILE: "FALSE"
+      SPAWN_PROTECTION: "0"
+      VIEW_DISTANCE: "${CRAFT_VIEW_DISTANCE:-10}"
+      SIMULATION_DISTANCE: "${CRAFT_SIMULATION_DISTANCE:-6}"
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: "${CRAFT_RCON_PASSWORD:-troque-essa-senha}"
+      MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
+      MODRINTH_PROJECTS: |
+        luckperms
+        essentialsx
+        essentialsx-spawn
+        griefprevention
+        vaultunlocked
+        viaversion
+        viabackwards
+        quickshop-hikari?
+      PLUGINS: |
+        https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
+        https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
+    volumes:
+      - /data/minecraft-nagel/craftlandia-data:/data
