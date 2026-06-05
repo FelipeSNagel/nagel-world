@@ -1,0 +1,37 @@
+name: NagelAliases
+version: 1.0.0
+main: com.nagelworld.NagelAliasesPlugin
+api-version: '1.21'
+author: Nagel
+description: Portuguese commands and market teleport for Nagel Craftlandia.
+commands:
+  mercado:
+    description: Teleporta para o mercado.
+    usage: /mercado
+  loja:
+    description: Teleporta para o mercado.
+    usage: /loja
+  vender:
+    description: Vende o item na mao por padrao.
+    usage: /vender [mao|tudo|inventario]
+  vendermao:
+    description: Vende o item na mao.
+    usage: /vendermao
+  vendertudo:
+    description: Vende todos os itens vendaveis.
+    usage: /vendertudo
+  venderinventario:
+    description: Vende todos os itens vendaveis do inventario.
+    usage: /venderinventario
+  preco:
+    description: Mostra o preco de venda.
+    usage: /preco [item]
+  saldo:
+    description: Mostra saldo.
+    usage: /saldo
+  dinheiro:
+    description: Mostra saldo.
+    usage: /dinheiro
+  pagar:
+    description: Paga outro jogador.
+    usage: /pagar <jogador> <valor>

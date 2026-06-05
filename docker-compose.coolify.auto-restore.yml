@@ -25,33 +25,7 @@ services:
 
       if [ -d "$$DATA_DIR" ]; then
         mkdir -p "$$DATA_DIR/plugins/Essentials/warps"
-        printf '%s\n' \
-          'command-block-overrides: []' \
-          'ignore-vanilla-permissions: false' \
-          'aliases:' \
-          '  icanhasbukkit:' \
-          '  - version $$1-' \
-          '  mercado:' \
-          '  - essentials:warp mercado' \
-          '  loja:' \
-          '  - essentials:warp mercado' \
-          '  vender:' \
-          '  - essentials:sell hand' \
-          '  vendermao:' \
-          '  - essentials:sell hand' \
-          '  vendertudo:' \
-          '  - essentials:sell all' \
-          '  venderinventario:' \
-          '  - essentials:sell inventory' \
-          '  preco:' \
-          '  - essentials:worth $$1-' \
-          '  saldo:' \
-          '  - essentials:balance $$1-' \
-          '  dinheiro:' \
-          '  - essentials:balance $$1-' \
-          '  pagar:' \
-          '  - essentials:pay $$1-' \
-          > "$$DATA_DIR/commands.yml"
+        rm -f "$$DATA_DIR/commands.yml"
         printf 'world: %s\nx: 0.5\ny: 90.0\nz: 0.5\nyaw: 180.0\npitch: 0.0\nname: mercado\n' "$$CRAFT_LEVEL_NAME" > "$$DATA_DIR/plugins/Essentials/warps/mercado.yml"
       fi
 
@@ -79,33 +53,7 @@ services:
       echo "Restoring $$latest"
       tar -C "$$DATA_ROOT" -xzf "$$BACKUP_DIR/$$latest"
       mkdir -p "$$DATA_DIR/plugins/Essentials/warps"
-      printf '%s\n' \
-        'command-block-overrides: []' \
-        'ignore-vanilla-permissions: false' \
-        'aliases:' \
-        '  icanhasbukkit:' \
-        '  - version $$1-' \
-        '  mercado:' \
-        '  - essentials:warp mercado' \
-        '  loja:' \
-        '  - essentials:warp mercado' \
-        '  vender:' \
-        '  - essentials:sell hand' \
-        '  vendermao:' \
-        '  - essentials:sell hand' \
-        '  vendertudo:' \
-        '  - essentials:sell all' \
-        '  venderinventario:' \
-        '  - essentials:sell inventory' \
-        '  preco:' \
-        '  - essentials:worth $$1-' \
-        '  saldo:' \
-        '  - essentials:balance $$1-' \
-        '  dinheiro:' \
-        '  - essentials:balance $$1-' \
-        '  pagar:' \
-        '  - essentials:pay $$1-' \
-        > "$$DATA_DIR/commands.yml"
+      rm -f "$$DATA_DIR/commands.yml"
       printf 'world: %s\nx: 0.5\ny: 90.0\nz: 0.5\nyaw: 180.0\npitch: 0.0\nname: mercado\n' "$$CRAFT_LEVEL_NAME" > "$$DATA_DIR/plugins/Essentials/warps/mercado.yml"
       chown -R 1000:1000 "$$DATA_DIR" 2>/dev/null || true
       date -u +"%Y-%m-%dT%H:%M:%SZ $$latest" > "$$MARKER"
@@ -143,6 +91,7 @@ services:
       SIMULATION_DISTANCE: "${CRAFT_SIMULATION_DISTANCE:-6}"
       ENABLE_RCON: "true"
       RCON_PASSWORD: "${CRAFT_RCON_PASSWORD:-troque-essa-senha}"
+      MARKET_WORLD: "${CRAFT_LEVEL_NAME:-CraftlandiaWorld}"
       RCON_CMDS_STARTUP: |-
         lp group default permission set essentials.help true
         lp group default permission set essentials.spawn true
@@ -219,6 +168,7 @@ services:
         viabackwards
         quickshop-hikari?
       PLUGINS: |
+        https://raw.githubusercontent.com/FelipeSNagel/nagel-world/main/config/craftlandia/NagelAliases.jar
         https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
     volumes:

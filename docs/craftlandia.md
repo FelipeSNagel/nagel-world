@@ -77,7 +77,8 @@ Isso libera para jogadores comuns:
 
 ## Mercado
 
-O deploy cria um warp chamado `mercado` e aliases:
+O deploy instala o plugin `NagelAliases`, que cria comandos em portugues e
+teleporta diretamente para a area do mercado:
 
 ```text
 /mercado
@@ -86,7 +87,8 @@ O deploy cria um warp chamado `mercado` e aliases:
 
 Eles levam para uma plataforma de mercado em `x=0, y=90, z=0`. O startup do
 servidor tambem cria bancas simples nessa area com blocos, barrels e teto
-colorido.
+colorido. O restore remove aliases antigos em `commands.yml` para evitar
+conflito com o plugin.
 
 Comandos de venda em portugues:
 
@@ -101,8 +103,13 @@ Comandos de venda em portugues:
 /pagar Nome valor
 ```
 
-Observacao: aliases do `commands.yml` do Paper nao traduzem subcomandos. Por
-isso usamos `/vendertudo` em vez de `/vender tudo`.
+O comando `/vender` tambem aceita atalhos:
+
+```text
+/vender tudo
+/vender inventario
+/vender mao
+```
 
 ## Protecao de terreno
 

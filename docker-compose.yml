@@ -61,6 +61,7 @@ services:
       SIMULATION_DISTANCE: "${CRAFT_SIMULATION_DISTANCE:-6}"
       ENABLE_RCON: "true"
       RCON_PASSWORD: "${CRAFT_RCON_PASSWORD:-minecraft}"
+      MARKET_WORLD: "${CRAFT_LEVEL_NAME:-CraftlandiaWorld}"
       RCON_CMDS_STARTUP: |-
         lp group default permission set essentials.help true
         lp group default permission set essentials.spawn true
@@ -137,8 +138,8 @@ services:
         viabackwards
         quickshop-hikari?
       PLUGINS: |
+        https://raw.githubusercontent.com/FelipeSNagel/nagel-world/main/config/craftlandia/NagelAliases.jar
         https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
     volumes:
       - ./craftlandia-data:/data
-      - ./config/craftlandia/commands.yml:/data/commands.yml:ro
