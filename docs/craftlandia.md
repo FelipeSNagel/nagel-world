@@ -153,6 +153,17 @@ farmar e vender itens ao servidor.
 QuickShop-Hikari, quando carregado, permite criar lojas em bau. Em geral, o
 jogador coloca um bau, segura o item e usa o fluxo do plugin para definir preco.
 
+Para criar por comando:
+
+```text
+/qs create sell 1000
+/qs create buy 1000
+```
+
+O jogador precisa estar olhando para um bau/barrel suportado. As permissoes
+incluem `quickshop.player`, `quickshop.create.cmd`,
+`quickshop.create.sell` e `quickshop.create.buy`.
+
 ## Backups
 
 ```bash

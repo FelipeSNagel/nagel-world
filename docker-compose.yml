@@ -86,14 +86,18 @@ services:
         lp group default permission set essentials.warps.mercado true
         lp group default permission set griefprevention.createclaims true
         lp group default permission set griefprevention.claims true
+        lp group default permission set quickshop.player true
         lp group default permission set quickshop.use true
+        lp group default permission set quickshop.create.cmd true
         lp group default permission set quickshop.create.sell true
         lp group default permission set quickshop.create.buy true
+        lp group default permission set quickshop.create.stacks true
+        lp group default permission set quickshop.create.changeitem true
         lp group default permission set quickshop.create.changeprice true
         lp group default permission set quickshop.create.changeamount true
         lp group default permission set quickshop.create.double true
-        lp group default permission set quickshop.create.stacks true
         lp group default permission set quickshop.find true
+        lp group default permission set quickshop.search true
         fill -12 90 -12 12 98 12 air
         fill -12 89 -12 12 89 12 stone_bricks
         fill -12 90 -12 12 90 -12 oak_fence
