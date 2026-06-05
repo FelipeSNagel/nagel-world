@@ -156,12 +156,16 @@ jogador coloca um bau, segura o item e usa o fluxo do plugin para definir preco.
 Para criar por comando:
 
 ```text
-/qs create sell 1000
-/qs create buy 1000
+/qs create 1000
+/qs create 1000 dirt
 ```
 
-O jogador precisa estar olhando para um bau/barrel suportado. As permissoes
-incluem `quickshop.player`, `quickshop.create.cmd`,
+O jogador precisa estar olhando para um bau/barrel suportado. No primeiro
+exemplo, a loja usa o item que esta na mao principal. No segundo, o item e
+informado pelo ID em ingles do Minecraft. Para alternar uma loja ja criada
+entre venda e compra, olhe para ela e use `/qs sell` ou `/qs buy`.
+
+As permissoes incluem `quickshop.player`, `quickshop.create.cmd`,
 `quickshop.create.sell` e `quickshop.create.buy`.
 
 ## Backups
