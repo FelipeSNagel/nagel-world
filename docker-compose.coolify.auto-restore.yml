@@ -27,6 +27,15 @@ services:
         mkdir -p "$$DATA_DIR/plugins/Essentials/warps"
         rm -f "$$DATA_DIR/commands.yml"
         printf 'world: %s\nx: 0.5\ny: 90.0\nz: 0.5\nyaw: 180.0\npitch: 0.0\nname: mercado\n' "$$CRAFT_LEVEL_NAME" > "$$DATA_DIR/plugins/Essentials/warps/mercado.yml"
+        essentials_config="$$DATA_DIR/plugins/Essentials/config.yml"
+        if [ -f "$$essentials_config" ]; then
+          sed -i \
+            -e 's/^respawn-listener-priority:.*/respawn-listener-priority: high/' \
+            -e 's/^respawn-at-home:.*/respawn-at-home: true/' \
+            -e 's/^respawn-at-home-bed:.*/respawn-at-home-bed: true/' \
+            -e 's/^respawn-at-anchor:.*/respawn-at-anchor: true/' \
+            "$$essentials_config"
+        fi
       fi
 
       if [ "$$RESTORE_MODE" != "force" ] && [ -f "$$MARKER" ]; then
@@ -55,6 +64,15 @@ services:
       mkdir -p "$$DATA_DIR/plugins/Essentials/warps"
       rm -f "$$DATA_DIR/commands.yml"
       printf 'world: %s\nx: 0.5\ny: 90.0\nz: 0.5\nyaw: 180.0\npitch: 0.0\nname: mercado\n' "$$CRAFT_LEVEL_NAME" > "$$DATA_DIR/plugins/Essentials/warps/mercado.yml"
+      essentials_config="$$DATA_DIR/plugins/Essentials/config.yml"
+      if [ -f "$$essentials_config" ]; then
+        sed -i \
+          -e 's/^respawn-listener-priority:.*/respawn-listener-priority: high/' \
+          -e 's/^respawn-at-home:.*/respawn-at-home: true/' \
+          -e 's/^respawn-at-home-bed:.*/respawn-at-home-bed: true/' \
+          -e 's/^respawn-at-anchor:.*/respawn-at-anchor: true/' \
+          "$$essentials_config"
+      fi
       chown -R 1000:1000 "$$DATA_DIR" 2>/dev/null || true
       date -u +"%Y-%m-%dT%H:%M:%SZ $$latest" > "$$MARKER"
 

@@ -1,9 +1,30 @@
 services:
+  configure-essentials:
+    image: alpine:3.20
+    restart: "no"
+    entrypoint: ["/bin/sh", "-lc"]
+    command: |
+      config="/data/plugins/Essentials/config.yml"
+      if [ -f "$$config" ]; then
+        sed -i \
+          -e 's/^respawn-listener-priority:.*/respawn-listener-priority: high/' \
+          -e 's/^respawn-at-home:.*/respawn-at-home: true/' \
+          -e 's/^respawn-at-home-bed:.*/respawn-at-home-bed: true/' \
+          -e 's/^respawn-at-anchor:.*/respawn-at-anchor: true/' \
+          "$$config"
+        echo "Essentials respawn configured for bed, anchor, home, then world spawn."
+      fi
+    volumes:
+      - /data/minecraft-nagel/craftlandia-data:/data
+
   craftlandia:
     image: itzg/minecraft-server:java25
     restart: unless-stopped
     stdin_open: true
     tty: true
+    depends_on:
+      configure-essentials:
+        condition: service_completed_successfully
     ports:
       - "19132:19132/udp"
     environment:

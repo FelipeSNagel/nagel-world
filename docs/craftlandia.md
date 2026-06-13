@@ -14,6 +14,11 @@ Bedrock entrarem por celular, console e Windows Bedrock.
 - ViaVersion + ViaBackwards: compatibilidade de versoes.
 - QuickShop-Hikari: lojas em bau, quando compativel com a versao baixada.
 
+No respawn de morte, uma cama valida ou ancora de renascimento tem prioridade.
+Sem uma delas, o jogador reaparece no primeiro home criado com `/sethome`.
+Se nenhum ponto estiver disponivel, ele volta ao spawn do mundo. Os comandos
+`/sethome` e `/home` continuam funcionando normalmente para teleporte.
+
 ## Subir
 
 ```bash
