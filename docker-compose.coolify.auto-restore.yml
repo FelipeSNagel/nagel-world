@@ -191,6 +191,7 @@ services:
         quickshop-hikari?
       PLUGINS: |
         https://raw.githubusercontent.com/FelipeSNagel/nagel-world/main/config/craftlandia/NagelAliases.jar
+        https://raw.githubusercontent.com/FelipeSNagel/nagel-world/main/config/craftlandia/NagelGestures.jar
         https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
     volumes:

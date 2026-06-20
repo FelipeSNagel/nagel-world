@@ -1,0 +1,10 @@
+name: NagelGestures
+version: 1.0.0
+main: com.nagelworld.gestures.NagelGesturesPlugin
+api-version: '1.21'
+author: Nagel
+description: Atalhos por gestos para o Nagel Craftlandia.
+permissions:
+  nagelgestures.home:
+    description: Permite usar o gesto de agachar tres vezes para executar /home.
+    default: true

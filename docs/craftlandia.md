@@ -13,11 +13,23 @@ Bedrock entrarem por celular, console e Windows Bedrock.
 - VaultUnlocked: ponte de economia/permissoes para outros plugins.
 - ViaVersion + ViaBackwards: compatibilidade de versoes.
 - QuickShop-Hikari: lojas em bau, quando compativel com a versao baixada.
+- NagelGestures: atalho de controle para voltar para casa sem abrir o chat.
 
 No respawn de morte, uma cama valida ou ancora de renascimento tem prioridade.
 Sem uma delas, o jogador reaparece no primeiro home criado com `/sethome`.
 Se nenhum ponto estiver disponivel, ele volta ao spawn do mundo. Os comandos
 `/sethome` e `/home` continuam funcionando normalmente para teleporte.
+
+## Atalho para casa
+
+Agache tres vezes, sem sair do lugar, em ate dois segundos para executar
+`/home`. O atalho tem cinco segundos de intervalo entre ativacoes e funciona
+como o comando normal do Essentials:
+
+- ele teleporta para a casa que ja foi criada com `/sethome`;
+- ele nao altera nem cria uma casa;
+- se o jogador ainda nao tiver uma casa, o Essentials mostra o erro normal;
+- `/home` pelo chat continua funcionando.
 
 ## Subir
 
