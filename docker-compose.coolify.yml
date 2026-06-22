@@ -50,6 +50,9 @@ services:
       ENABLE_RCON: "true"
       RCON_PASSWORD: "${CRAFT_RCON_PASSWORD:-troque-essa-senha}"
       MARKET_WORLD: "${CRAFT_LEVEL_NAME:-CraftlandiaWorld}"
+      APPLY_EXTRA_FILES: |
+        plugins/ViaVersion-5.10.0.jar<https://github.com/ViaVersion/ViaVersion/releases/download/5.10.0/ViaVersion-5.10.0.jar
+        plugins/ViaBackwards-5.10.0.jar<https://github.com/ViaVersion/ViaBackwards/releases/download/5.10.0/ViaBackwards-5.10.0.jar
       RCON_CMDS_STARTUP: |-
         lp group default permission set essentials.help true
         lp group default permission set essentials.spawn true
@@ -130,8 +133,6 @@ services:
       PLUGINS: |
         https://raw.githubusercontent.com/FelipeSNagel/nagel-world/main/config/craftlandia/NagelAliases.jar
         https://raw.githubusercontent.com/FelipeSNagel/nagel-world/main/config/craftlandia/NagelGestures.jar
-        https://github.com/ViaVersion/ViaVersion/releases/download/5.10.0/ViaVersion-5.10.0.jar
-        https://github.com/ViaVersion/ViaBackwards/releases/download/5.10.0/ViaBackwards-5.10.0.jar
         https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
     volumes:
