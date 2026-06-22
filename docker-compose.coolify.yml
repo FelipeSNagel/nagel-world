@@ -27,6 +27,7 @@ services:
         condition: service_completed_successfully
     ports:
       - "19132:19132/udp"
+      - "25565:25565/tcp"
     environment:
       EULA: "TRUE"
       TYPE: "PAPER"
@@ -39,7 +40,7 @@ services:
       MODE: "${CRAFT_GAMEMODE:-survival}"
       DIFFICULTY: "${CRAFT_DIFFICULTY:-normal}"
       MAX_PLAYERS: "${CRAFT_MAX_PLAYERS:-20}"
-      ONLINE_MODE: "FALSE"
+      ONLINE_MODE: "TRUE"
       ENFORCE_SECURE_PROFILE: "FALSE"
       ALLOW_FLIGHT: "TRUE"
       SPAWN_PROTECTION: "0"

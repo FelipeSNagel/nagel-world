@@ -38,8 +38,22 @@ make craft-start
 make craft-logs
 ```
 
-O servidor usa UDP `19132` para Bedrock. O target `craft-start` para o Bedrock
-vanilla antes de subir o Craftlandia para evitar conflito de porta.
+O servidor aceita as duas edicoes no mesmo mundo:
+
+- Bedrock usa UDP `19132`;
+- Java Edition usa TCP `25565`.
+
+O target `craft-start` para o Bedrock vanilla antes de subir o Craftlandia
+para evitar conflito na porta Bedrock.
+
+Para entrar pelo Java Edition, adicione o servidor:
+
+```text
+31.97.252.93:25565
+```
+
+Contas Java sao autenticadas pela Microsoft. Contas Bedrock continuam entrando
+pelo Geyser/Floodgate e mantem suas identidades, inventarios e homes atuais.
 
 ## Primeiro admin
 

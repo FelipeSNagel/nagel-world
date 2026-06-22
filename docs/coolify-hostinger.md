@@ -110,7 +110,8 @@ o mundo atual.
 
 ## 4. Liberar porta
 
-Libere UDP `19132` no firewall da VPS e no painel da Hostinger.
+Libere UDP `19132` para Bedrock e TCP `25565` para Java Edition no firewall da
+VPS e no painel da Hostinger.
 
 Conexao:
 
