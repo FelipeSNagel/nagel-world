@@ -55,6 +55,10 @@ Para entrar pelo Java Edition, adicione o servidor:
 Contas Java sao autenticadas pela Microsoft. Contas Bedrock continuam entrando
 pelo Geyser/Floodgate e mantem suas identidades, inventarios e homes atuais.
 
+ViaVersion e ViaBackwards ficam fixados na versao `5.10.0`, que adiciona
+suporte para clientes Java `26.2` mesmo enquanto o Paper permanece em
+`26.1.2`.
+
 ## Primeiro admin
 
 Entre no servidor uma vez e veja o nome exato nos logs. Jogador Bedrock via

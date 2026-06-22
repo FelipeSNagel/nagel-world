@@ -24,6 +24,7 @@ services:
       printf '%s' "$$RCLONE_CONFIG_B64" | base64 -d > "$$RCLONE_CONFIG_FILE"
 
       if [ -d "$$DATA_DIR" ]; then
+        rm -f "$$DATA_DIR"/plugins/ViaVersion-*.jar "$$DATA_DIR"/plugins/ViaBackwards-*.jar
         mkdir -p "$$DATA_DIR/plugins/Essentials/warps"
         rm -f "$$DATA_DIR/commands.yml"
         printf 'world: %s\nx: 0.5\ny: 90.0\nz: 0.5\nyaw: 180.0\npitch: 0.0\nname: mercado\n' "$$CRAFT_LEVEL_NAME" > "$$DATA_DIR/plugins/Essentials/warps/mercado.yml"
@@ -61,6 +62,7 @@ services:
 
       echo "Restoring $$latest"
       tar -C "$$DATA_ROOT" -xzf "$$BACKUP_DIR/$$latest"
+      rm -f "$$DATA_DIR"/plugins/ViaVersion-*.jar "$$DATA_DIR"/plugins/ViaBackwards-*.jar
       mkdir -p "$$DATA_DIR/plugins/Essentials/warps"
       rm -f "$$DATA_DIR/commands.yml"
       printf 'world: %s\nx: 0.5\ny: 90.0\nz: 0.5\nyaw: 180.0\npitch: 0.0\nname: mercado\n' "$$CRAFT_LEVEL_NAME" > "$$DATA_DIR/plugins/Essentials/warps/mercado.yml"
@@ -188,12 +190,12 @@ services:
         essentialsx-spawn
         griefprevention
         vaultunlocked
-        viaversion
-        viabackwards
         quickshop-hikari?
       PLUGINS: |
         https://raw.githubusercontent.com/FelipeSNagel/nagel-world/main/config/craftlandia/NagelAliases.jar
         https://raw.githubusercontent.com/FelipeSNagel/nagel-world/main/config/craftlandia/NagelGestures.jar
+        https://github.com/ViaVersion/ViaVersion/releases/download/5.10.0/ViaVersion-5.10.0.jar
+        https://github.com/ViaVersion/ViaBackwards/releases/download/5.10.0/ViaBackwards-5.10.0.jar
         https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
     volumes:

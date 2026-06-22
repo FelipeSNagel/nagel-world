@@ -5,6 +5,7 @@ services:
     entrypoint: ["/bin/sh", "-lc"]
     command: |
       config="/data/plugins/Essentials/config.yml"
+      rm -f /data/plugins/ViaVersion-*.jar /data/plugins/ViaBackwards-*.jar
       if [ -f "$$config" ]; then
         sed -i \
           -e 's/^respawn-listener-priority:.*/respawn-listener-priority: high/' \
@@ -125,12 +126,12 @@ services:
         essentialsx-spawn
         griefprevention
         vaultunlocked
-        viaversion
-        viabackwards
         quickshop-hikari?
       PLUGINS: |
         https://raw.githubusercontent.com/FelipeSNagel/nagel-world/main/config/craftlandia/NagelAliases.jar
         https://raw.githubusercontent.com/FelipeSNagel/nagel-world/main/config/craftlandia/NagelGestures.jar
+        https://github.com/ViaVersion/ViaVersion/releases/download/5.10.0/ViaVersion-5.10.0.jar
+        https://github.com/ViaVersion/ViaBackwards/releases/download/5.10.0/ViaBackwards-5.10.0.jar
         https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
         https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
     volumes:
