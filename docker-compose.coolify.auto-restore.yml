@@ -24,7 +24,14 @@ services:
       printf '%s' "$$RCLONE_CONFIG_B64" | base64 -d > "$$RCLONE_CONFIG_FILE"
 
       if [ -d "$$DATA_DIR" ]; then
-        rm -f "$$DATA_DIR"/plugins/ViaVersion-*.jar "$$DATA_DIR"/plugins/ViaBackwards-*.jar
+        rm -f \
+          "$$DATA_DIR"/plugins/ViaVersion-*.jar \
+          "$$DATA_DIR"/plugins/ViaBackwards-*.jar \
+          "$$DATA_DIR"/plugins/Geyser-Spigot.jar \
+          "$$DATA_DIR"/plugins/Geyser-*.jar \
+          "$$DATA_DIR"/plugins/floodgate-spigot.jar \
+          "$$DATA_DIR"/plugins/floodgate-*.jar \
+          "$$DATA_DIR"/plugins/Floodgate-*.jar
         mkdir -p "$$DATA_DIR/plugins/Essentials/warps"
         rm -f "$$DATA_DIR/commands.yml"
         printf 'world: %s\nx: 0.5\ny: 90.0\nz: 0.5\nyaw: 180.0\npitch: 0.0\nname: mercado\n' "$$CRAFT_LEVEL_NAME" > "$$DATA_DIR/plugins/Essentials/warps/mercado.yml"
@@ -62,7 +69,14 @@ services:
 
       echo "Restoring $$latest"
       tar -C "$$DATA_ROOT" -xzf "$$BACKUP_DIR/$$latest"
-      rm -f "$$DATA_DIR"/plugins/ViaVersion-*.jar "$$DATA_DIR"/plugins/ViaBackwards-*.jar
+      rm -f \
+        "$$DATA_DIR"/plugins/ViaVersion-*.jar \
+        "$$DATA_DIR"/plugins/ViaBackwards-*.jar \
+        "$$DATA_DIR"/plugins/Geyser-Spigot.jar \
+        "$$DATA_DIR"/plugins/Geyser-*.jar \
+        "$$DATA_DIR"/plugins/floodgate-spigot.jar \
+        "$$DATA_DIR"/plugins/floodgate-*.jar \
+        "$$DATA_DIR"/plugins/Floodgate-*.jar
       mkdir -p "$$DATA_DIR/plugins/Essentials/warps"
       rm -f "$$DATA_DIR/commands.yml"
       printf 'world: %s\nx: 0.5\ny: 90.0\nz: 0.5\nyaw: 180.0\npitch: 0.0\nname: mercado\n' "$$CRAFT_LEVEL_NAME" > "$$DATA_DIR/plugins/Essentials/warps/mercado.yml"
@@ -96,8 +110,10 @@ services:
     environment:
       EULA: "TRUE"
       TYPE: "PAPER"
-      VERSION: "LATEST"
-      VERSION_FROM_MODRINTH_PROJECTS: "true"
+      VERSION: "26.1.2"
+      PAPER_BUILD: "74"
+      FORCE_REDOWNLOAD: "true"
+      VERSION_FROM_MODRINTH_PROJECTS: "false"
       MEMORY: "${CRAFT_MEMORY:-2G}"
       SERVER_NAME: "${CRAFT_SERVER_NAME:-Nagel Craftlandia}"
       MOTD: "${CRAFT_MOTD:-Nagel Craftlandia}"
@@ -115,8 +131,10 @@ services:
       RCON_PASSWORD: "${CRAFT_RCON_PASSWORD:-troque-essa-senha}"
       MARKET_WORLD: "${CRAFT_LEVEL_NAME:-CraftlandiaWorld}"
       APPLY_EXTRA_FILES: |
-        plugins/ViaVersion-5.10.0.jar<https://github.com/ViaVersion/ViaVersion/releases/download/5.10.0/ViaVersion-5.10.0.jar
-        plugins/ViaBackwards-5.10.0.jar<https://github.com/ViaVersion/ViaBackwards/releases/download/5.10.0/ViaBackwards-5.10.0.jar
+        plugins/ViaVersion-5.11.0.jar<https://github.com/ViaVersion/ViaVersion/releases/download/5.11.0/ViaVersion-5.11.0.jar
+        plugins/ViaBackwards-5.11.0.jar<https://github.com/ViaVersion/ViaBackwards/releases/download/5.11.0/ViaBackwards-5.11.0.jar
+        plugins/Geyser-Spigot.jar<https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
+        plugins/floodgate-spigot.jar<https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
       RCON_CMDS_STARTUP: |-
         lp group default permission set essentials.help true
         lp group default permission set essentials.spawn true
@@ -197,7 +215,5 @@ services:
       PLUGINS: |
         https://raw.githubusercontent.com/FelipeSNagel/nagel-world/main/config/craftlandia/NagelAliases.jar
         https://raw.githubusercontent.com/FelipeSNagel/nagel-world/main/config/craftlandia/NagelGestures.jar
-        https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
-        https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
     volumes:
       - /data/minecraft-nagel/craftlandia-data:/data

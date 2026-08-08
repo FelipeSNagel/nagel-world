@@ -55,9 +55,11 @@ Para entrar pelo Java Edition, adicione o servidor:
 Contas Java sao autenticadas pela Microsoft. Contas Bedrock continuam entrando
 pelo Geyser/Floodgate e mantem suas identidades, inventarios e homes atuais.
 
-ViaVersion e ViaBackwards ficam fixados na versao `5.10.0`, que adiciona
-suporte para clientes Java `26.2` mesmo enquanto o Paper permanece em
-`26.1.2`.
+O Paper fica fixado em `26.1.2` build `74`, canal stable, que e a linha
+suportada pelo EssentialsX atual. ViaVersion e ViaBackwards ficam fixados em
+`5.11.0` para aceitar clientes Java `26.2`. Geyser e Floodgate sao baixados
+pela API oficial mais recente no redeploy, depois que os JARs antigos sao
+removidos do volume persistente.
 
 ## Primeiro admin
 
