@@ -24,7 +24,7 @@ services:
       printf '%s' "$$RCLONE_CONFIG_B64" | base64 -d > "$$RCLONE_CONFIG_FILE"
 
       if [ -d "$$DATA_DIR" ]; then
-        rm -f \
+        rm -rf \
           "$$DATA_DIR"/plugins/ViaVersion-*.jar \
           "$$DATA_DIR"/plugins/ViaBackwards-*.jar \
           "$$DATA_DIR"/plugins/Geyser-Spigot.jar \
@@ -69,7 +69,7 @@ services:
 
       echo "Restoring $$latest"
       tar -C "$$DATA_ROOT" -xzf "$$BACKUP_DIR/$$latest"
-      rm -f \
+      rm -rf \
         "$$DATA_DIR"/plugins/ViaVersion-*.jar \
         "$$DATA_DIR"/plugins/ViaBackwards-*.jar \
         "$$DATA_DIR"/plugins/Geyser-Spigot.jar \

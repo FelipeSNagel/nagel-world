@@ -37,7 +37,7 @@ services:
     entrypoint: ["/bin/sh", "-lc"]
     command: |
       config="/data/plugins/Essentials/config.yml"
-      rm -f \
+      rm -rf \
         /data/plugins/ViaVersion-*.jar \
         /data/plugins/ViaBackwards-*.jar \
         /data/plugins/Geyser-Spigot.jar \
