@@ -1,21 +1,29 @@
 package com.nagelworld;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public final class NagelAliasesPlugin extends JavaPlugin implements CommandExecutor {
+public final class NagelAliasesPlugin extends JavaPlugin implements CommandExecutor, Listener {
   private static final double MARKET_X = 0.5;
   private static final double MARKET_Y = 90.0;
   private static final double MARKET_Z = 0.5;
+  private final Set<UUID> coordinatesEnabled = new HashSet<>();
 
   @Override
   public void onEnable() {
@@ -29,11 +37,16 @@ public final class NagelAliasesPlugin extends JavaPlugin implements CommandExecu
         "preco",
         "saldo",
         "dinheiro",
-        "pagar")) {
+        "pagar",
+        "coords",
+        "coordenadas")) {
       if (getCommand(command) != null) {
         getCommand(command).setExecutor(this);
       }
     }
+
+    getServer().getPluginManager().registerEvents(this, this);
+    Bukkit.getScheduler().runTaskTimer(this, this::updateCoordinates, 0L, 10L);
   }
 
   @Override
@@ -59,9 +72,57 @@ public final class NagelAliasesPlugin extends JavaPlugin implements CommandExecu
         return dispatch(sender, "balance" + suffix(args));
       case "pagar":
         return dispatch(sender, "pay" + suffix(args));
+      case "coords":
+      case "coordenadas":
+        return toggleCoordinates(sender);
       default:
         return false;
     }
+  }
+
+  private boolean toggleCoordinates(CommandSender sender) {
+    if (!(sender instanceof Player)) {
+      sender.sendMessage("Use este comando dentro do jogo.");
+      return true;
+    }
+
+    Player player = (Player) sender;
+    if (coordinatesEnabled.remove(player.getUniqueId())) {
+      player.sendActionBar("");
+      player.sendMessage(ChatColor.YELLOW + "Coordenadas desativadas.");
+      return true;
+    }
+
+    coordinatesEnabled.add(player.getUniqueId());
+    showCoordinates(player);
+    player.sendMessage(ChatColor.GREEN + "Coordenadas ativadas. Use /coords para ocultar.");
+    return true;
+  }
+
+  private void updateCoordinates() {
+    for (UUID playerId : coordinatesEnabled) {
+      Player player = Bukkit.getPlayer(playerId);
+      if (player != null && player.isOnline()) {
+        showCoordinates(player);
+      }
+    }
+  }
+
+  private void showCoordinates(Player player) {
+    Location location = player.getLocation();
+    String coordinates = String.format(
+        Locale.ROOT,
+        "%sX: %d  Y: %d  Z: %d",
+        ChatColor.GOLD,
+        location.getBlockX(),
+        location.getBlockY(),
+        location.getBlockZ());
+    player.sendActionBar(coordinates);
+  }
+
+  @EventHandler
+  public void onPlayerQuit(PlayerQuitEvent event) {
+    coordinatesEnabled.remove(event.getPlayer().getUniqueId());
   }
 
   private boolean teleportToMarket(CommandSender sender) {

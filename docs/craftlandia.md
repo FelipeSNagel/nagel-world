@@ -103,6 +103,7 @@ Isso libera para jogadores comuns:
 
 - `/spawn`
 - `/mercado`, `/loja`
+- `/coords`, `/coordenadas` para alternar as coordenadas na barra de acao
 - `/sethome`, `/home`, `/delhome`
 - `/tpa`, `/tpaccept`, `/tpdeny`
 - `/balance`, `/pay`, `/balancetop`
