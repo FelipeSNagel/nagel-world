@@ -15,7 +15,7 @@ services:
         /data/plugins/Floodgate-*.jar
       if [ -f "$$config" ]; then
         sed -i \
-          -e 's/^respawn-listener-priority:.*/respawn-listener-priority: high/' \
+          -e 's/^respawn-listener-priority:.*/respawn-listener-priority: highest/' \
           -e 's/^respawn-at-home:.*/respawn-at-home: true/' \
           -e 's/^respawn-at-home-bed:.*/respawn-at-home-bed: true/' \
           -e 's/^respawn-at-anchor:.*/respawn-at-anchor: true/' \
