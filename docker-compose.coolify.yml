@@ -58,6 +58,7 @@ services:
       SIMULATION_DISTANCE: "${CRAFT_SIMULATION_DISTANCE:-6}"
       ENABLE_RCON: "true"
       RCON_PASSWORD: "${CRAFT_RCON_PASSWORD:-troque-essa-senha}"
+      OPS: "${CRAFT_OPS:-FelipeSNagel}"
       MARKET_WORLD: "${CRAFT_LEVEL_NAME:-CraftlandiaWorld}"
       RCON_CMDS_STARTUP: |-
         lp group default permission set essentials.help true

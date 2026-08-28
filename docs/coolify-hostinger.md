@@ -69,7 +69,9 @@ No Coolify:
 1. New Resource.
 2. Docker Compose Empty.
 3. Cole o conteudo de `docker-compose.coolify.yml`.
-4. Configure as variaveis, principalmente `CRAFT_RCON_PASSWORD`.
+4. Configure as variaveis, principalmente `CRAFT_RCON_PASSWORD`. A variavel
+   opcional `CRAFT_OPS` aceita os nomes dos administradores separados por
+   virgula e usa `FelipeSNagel` como padrao.
 5. Deploy.
 
 O compose usa:
