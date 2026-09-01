@@ -1,0 +1,17 @@
+{
+  "format_version": "1.14.0",
+  "sound_definitions": {
+    "nagelzombie:zombie.ambient": {
+      "category": "hostile",
+      "sounds": [
+        {"name": "sounds/infected_ambient_1", "stream": false},
+        {"name": "sounds/infected_ambient_2", "stream": false},
+        {"name": "sounds/infected_ambient_3", "stream": false}
+      ]
+    },
+    "nagelzombie:zombie.berserker": {
+      "category": "hostile",
+      "sounds": [{"name": "sounds/berserker_roar", "stream": false}]
+    }
+  }
+}

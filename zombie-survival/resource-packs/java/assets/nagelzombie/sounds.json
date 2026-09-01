@@ -1,0 +1,14 @@
+{
+  "zombie.ambient": {
+    "category": "hostile",
+    "sounds": [
+      "nagelzombie:infected_ambient_1",
+      "nagelzombie:infected_ambient_2",
+      "nagelzombie:infected_ambient_3"
+    ]
+  },
+  "zombie.berserker": {
+    "category": "hostile",
+    "sounds": ["nagelzombie:berserker_roar"]
+  }
+}

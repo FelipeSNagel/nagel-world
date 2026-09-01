@@ -201,14 +201,19 @@ public final class GenerateTextures {
         bodyPart(image, random, pants, pantsDark, 16, 48, 16, 16);
 
         Graphics2D g = canvas(image);
-        rect(g, eye, 9, 10, 2, 1);
-        rect(g, new Color(191, 55, 45), 13, 10, 2, 1);
-        rect(g, new Color(78, 30, 28), 10, 14, 5, 1);
+        rect(g, skinDark.darker(), 9, 10, 2, 2);
+        rect(g, skinDark.darker(), 13, 10, 2, 2);
+        rect(g, eye, 10, 10, 1, 1);
+        rect(g, new Color(191, 55, 45), 14, 10, 1, 1);
+        rect(g, new Color(61, 25, 24), 10, 14, 5, 1);
+        rect(g, new Color(106, 30, 28), 15, 12, 1, 3);
+        rect(g, shirtDark.darker(), 21, 21, 3, 4);
         rect(g, new Color(118, 30, 28), 24, 21, 4, 7);
         rect(g, new Color(177, 45, 37), 25, 22, 2, 3);
         rect(g, new Color(104, 29, 27), 45, 24, 3, 5);
         rect(g, new Color(94, 28, 27), 5, 24, 2, 6);
-        rect(g, new Color(76, 24, 23), 18, 53, 3, 6);
+        rect(g, pantsDark.darker(), 20, 52, 3, 5);
+        rect(g, new Color(76, 24, 23), 18, 53, 2, 6);
         finish(g, image, file);
     }
 
@@ -224,12 +229,16 @@ public final class GenerateTextures {
 
     private static void noisyPart(BufferedImage image, Random random, Color base, Color shadow,
                                   int x, int y, int width, int height, double chance) {
-        for (int py = y; py < y + height; py++) {
-            for (int px = x; px < x + width; px++) {
-                double roll = random.nextDouble();
-                Color color = roll < chance ? shadow : roll > 0.92 ? base.brighter() : base;
-                image.setRGB(px, py, color.getRGB());
-            }
+        Graphics2D g = canvas(image);
+        rect(g, base, x, y, width, height);
+        int patches = Math.max(1, (int) Math.round(width * height * chance / 7.0));
+        for (int i = 0; i < patches; i++) {
+            int patchWidth = Math.min(width, random.nextInt(1, 4));
+            int patchHeight = Math.min(height, random.nextInt(1, 4));
+            int patchX = x + random.nextInt(Math.max(1, width - patchWidth + 1));
+            int patchY = y + random.nextInt(Math.max(1, height - patchHeight + 1));
+            rect(g, i % 4 == 0 ? base.brighter() : shadow, patchX, patchY, patchWidth, patchHeight);
         }
+        g.dispose();
     }
 }

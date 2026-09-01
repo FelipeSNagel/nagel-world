@@ -109,6 +109,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private final Map<String, BlockProgress> blockDamage = new HashMap<>();
     private final Map<UUID, Double> lastTemperature = new HashMap<>();
     private final Map<UUID, Long> lastHordeDay = new HashMap<>();
+    private final Map<UUID, Long> lastBerserkerRoar = new HashMap<>();
     private final Map<Material, double[]> foodValues = new EnumMap<>(Material.class);
 
     private NamespacedKey weaponKey;
@@ -339,6 +340,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         if (!(event.getEntity() instanceof Zombie zombie)) {
             return;
         }
+        lastBerserkerRoar.remove(zombie.getUniqueId());
         String type = zombie.getPersistentDataContainer().get(zombieTypeKey, PersistentDataType.STRING);
         double chance = "brute".equals(type) ? 0.35 : 0.10;
         if (ThreadLocalRandom.current().nextDouble() < chance) {
@@ -457,6 +459,10 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             applyingWeaponDamage.remove(shooterId);
         }
         applyWeaponKnockback(player, target, weapon, impact.pellets);
+        if (target instanceof Zombie zombie
+            && "infected".equals(zombie.getPersistentDataContainer().get(zombieTypeKey, PersistentDataType.STRING))) {
+            playBerserkerRoar(zombie);
+        }
         target.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, target.getLocation().add(0, 1, 0), 4, 0.2, 0.3, 0.2, 0.05);
     }
 
@@ -922,13 +928,27 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
                 Player nearby = nearestPlayer(zombie.getLocation(), 28.0);
                 if (nearby == null) continue;
                 if (zombie.getTarget() == null && random.nextDouble() < 0.35) zombie.setTarget(nearby);
-                if (random.nextDouble() < 0.12) {
-                    String type = zombie.getPersistentDataContainer().get(zombieTypeKey, PersistentDataType.STRING);
-                    float pitch = "runner".equals(type) ? 1.25f : "brute".equals(type) ? 0.62f : random.nextFloat(0.78f, 1.08f);
-                    world.playSound(zombie.getLocation(), Sound.ENTITY_ZOMBIE_AMBIENT, 1.1f, pitch);
+                String type = zombie.getPersistentDataContainer().get(zombieTypeKey, PersistentDataType.STRING);
+                if ("infected".equals(type)) {
+                    if (random.nextDouble() < 0.28) playBerserkerRoar(zombie);
+                } else if (random.nextDouble() < 0.12) {
+                    float pitch = "runner".equals(type) ? 1.12f : "brute".equals(type) ? 0.72f : random.nextFloat(0.82f, 1.02f);
+                    world.playSound(zombie.getLocation(), "nagelzombie:zombie.ambient", 1.15f, pitch);
+                    world.playSound(zombie.getLocation(), Sound.ENTITY_ZOMBIE_AMBIENT, 0.28f, pitch * 0.9f);
                 }
             }
         }
+    }
+
+    private void playBerserkerRoar(Zombie zombie) {
+        long now = System.currentTimeMillis();
+        UUID id = zombie.getUniqueId();
+        if (now - lastBerserkerRoar.getOrDefault(id, 0L) < 12000L) return;
+        lastBerserkerRoar.put(id, now);
+        World world = zombie.getWorld();
+        world.playSound(zombie.getLocation(), "nagelzombie:zombie.berserker", 2.2f, 0.78f);
+        world.playSound(zombie.getLocation(), Sound.ENTITY_RAVAGER_ROAR, 0.75f, 0.58f);
+        world.playSound(zombie.getLocation(), Sound.ENTITY_WITHER_AMBIENT, 0.22f, 0.68f);
     }
 
     private void setAttribute(LivingEntity entity, Attribute attribute, double value) {

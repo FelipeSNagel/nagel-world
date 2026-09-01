@@ -41,9 +41,12 @@ de teste.
 - 78% dos infectados sao lentos; cacadores, corredores, brutamontes e alfas
   formam os 22% restantes.
 - Zumbis nao queimam durante o dia e emitem gemidos com tons diferentes.
-- Tres corpos diferentes e seis conjuntos de roupa geram varias aparencias.
+- Tres corpos redesenhados, com pele continua, feridas localizadas e seis
+  conjuntos de roupa geram varias aparencias sem o efeito pontilhado.
 - O Berserker possui escala 1,45x, 40 coracoes, velocidade baixa, ataque forte
   e alta resistencia a recuo.
+- Infectados usam tres gemidos graves proprios. O Berserker possui um rugido
+  exclusivo combinado com sons nativos, garantindo impacto tambem no PS5.
 - A pistola possui recuo leve, o rifle recuo medio, a sniper recuo forte e a
   escopeta empurra proporcionalmente ao numero de chumbos que acertam.
 - Tiros atraem zumbis.

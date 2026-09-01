@@ -19,7 +19,7 @@ if [ ! -f "$API_JAR" ] || [ ! -d "$LIBRARIES" ]; then
 fi
 
 rm -rf "$BUILD" "$DIST"
-mkdir -p "$BUILD/classes" "$BUILD/generated-textures" "$DIST"
+mkdir -p "$BUILD/classes" "$BUILD/generated-textures" "$BUILD/generated-sounds-wav" "$BUILD/generated-sounds" "$DIST"
 
 CLASSPATH="$API_JAR:$(find "$LIBRARIES" -type f -name '*.jar' -print | paste -sd: -)"
 "$BUILD_JAVA_HOME/bin/javac" -proc:none --release 21 -classpath "$CLASSPATH" \
@@ -30,8 +30,18 @@ cp "$PROJECT/plugin/src/main/resources/plugin.yml" "$BUILD/classes/plugin.yml"
 cp "$PROJECT/plugin/src/main/resources/config.yml" "$BUILD/classes/config.yml"
 "$BUILD_JAVA_HOME/bin/jar" --create --file "$DIST/NagelZombieSurvival.jar" -C "$BUILD/classes" .
 
-"$BUILD_JAVA_HOME/bin/javac" --release 21 -d "$BUILD/tools" "$PROJECT/tools/GenerateTextures.java"
+"$BUILD_JAVA_HOME/bin/javac" --release 21 -d "$BUILD/tools" \
+  "$PROJECT/tools/GenerateTextures.java" "$PROJECT/tools/GenerateSounds.java"
 "$BUILD_JAVA_HOME/bin/java" -Djava.awt.headless=true -cp "$BUILD/tools" GenerateTextures "$BUILD/generated-textures"
+"$BUILD_JAVA_HOME/bin/java" -cp "$BUILD/tools" GenerateSounds "$BUILD/generated-sounds-wav"
+if ! command -v oggenc >/dev/null 2>&1; then
+  echo "oggenc nao encontrado; instale vorbis-tools para gerar os sons OGG." >&2
+  exit 1
+fi
+for wav in "$BUILD/generated-sounds-wav"/*.wav; do
+  name="$(basename "$wav" .wav)"
+  oggenc -Q -q 5 -o "$BUILD/generated-sounds/$name.ogg" "$wav"
+done
 
 cp -R "$PROJECT/resource-packs/java" "$BUILD/java-pack"
 mkdir -p "$BUILD/java-pack/assets/nagelzombie/textures/item"
@@ -48,6 +58,8 @@ cp "$BUILD/generated-textures/zombie.png" "$BUILD/java-pack/assets/minecraft/tex
 cp "$BUILD/generated-textures/husk.png" "$BUILD/java-pack/assets/minecraft/textures/entity/zombie/husk.png"
 cp "$BUILD/generated-textures/drowned.png" "$BUILD/java-pack/assets/minecraft/textures/entity/zombie/drowned.png"
 cp "$BUILD/generated-textures/drowned_outer_layer.png" "$BUILD/java-pack/assets/minecraft/textures/entity/zombie/drowned_outer_layer.png"
+mkdir -p "$BUILD/java-pack/assets/nagelzombie/sounds"
+cp "$BUILD/generated-sounds"/*.ogg "$BUILD/java-pack/assets/nagelzombie/sounds/"
 
 for item in pistol shotgun rifle sniper light_ammo shell rifle_ammo sniper_ammo; do
   mkdir -p "$BUILD/java-pack/assets/nagelzombie/items" "$BUILD/java-pack/assets/nagelzombie/models/item"
@@ -74,6 +86,8 @@ cp "$BUILD/generated-textures/zombie.png" "$BUILD/bedrock-pack/textures/entity/z
 cp "$BUILD/generated-textures/husk.png" "$BUILD/bedrock-pack/textures/entity/zombie/husk.png"
 cp "$BUILD/generated-textures/drowned.png" "$BUILD/bedrock-pack/textures/entity/zombie/drowned.png"
 cp "$BUILD/generated-textures/drowned_outer_layer.png" "$BUILD/bedrock-pack/textures/entity/zombie/drowned_outer_layer.png"
+mkdir -p "$BUILD/bedrock-pack/sounds"
+cp "$BUILD/generated-sounds"/*.ogg "$BUILD/bedrock-pack/sounds/"
 find "$BUILD/bedrock-pack" -type f -exec touch -t 202601010000 {} +
 (cd "$BUILD/bedrock-pack" && find . -type f -print | LC_ALL=C sort | zip -q "$DIST/NagelZombieBedrock.mcpack" -@)
 
