@@ -17,6 +17,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.GameMode;
+import org.bukkit.HeightMap;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -141,6 +142,10 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private int protectedSpawnRadius;
     private double daylightSpawnChance;
     private int daylightZombieCap;
+    private int nightZombieCapPerPlayer;
+    private double minimumZombieSpawnDistance;
+    private int maximumZombieSpawnBlockLight;
+    private boolean zombiesSpawnOutdoorsOnly;
     private double zombieBreakerChance;
     private double zombieBuilderChance;
 
@@ -149,7 +154,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         saveDefaultConfig();
         seasonLength = Math.max(1, getConfig().getInt("season-length-days", 28));
         hordeInterval = Math.max(1, getConfig().getInt("horde-interval-days", 10));
-        hordeSize = Math.max(1, getConfig().getInt("horde-size-per-player", 8));
+        hordeSize = Math.max(1, Math.min(4, getConfig().getInt("horde-size-per-player", 4)));
         zombiesBreakBlocks = getConfig().getBoolean("zombies-break-blocks", true);
         zombiesBuildStairs = getConfig().getBoolean("zombies-build-stairs", true);
         zombiesSpawnInDaylight = getConfig().getBoolean("zombies-spawn-in-daylight", true);
@@ -157,6 +162,11 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         protectedSpawnRadius = Math.max(0, getConfig().getInt("protected-spawn-radius", 12));
         daylightSpawnChance = Math.max(0.0, Math.min(1.0, getConfig().getDouble("daylight-spawn-chance", 0.12)));
         daylightZombieCap = Math.max(0, getConfig().getInt("daylight-zombie-cap", 3));
+        nightZombieCapPerPlayer = Math.max(1, getConfig().getInt("night-zombie-cap-per-player", 8));
+        minimumZombieSpawnDistance = Math.max(24.0, getConfig().getDouble("minimum-zombie-spawn-distance", 36.0));
+        maximumZombieSpawnBlockLight = Math.max(0, Math.min(15,
+            getConfig().getInt("maximum-zombie-spawn-block-light", 0)));
+        zombiesSpawnOutdoorsOnly = getConfig().getBoolean("zombies-spawn-outdoors-only", true);
         zombieBreakerChance = clampedChance("zombie-breaker-chance", 0.16);
         zombieBuilderChance = clampedChance("zombie-builder-chance", 0.12);
 
@@ -192,6 +202,9 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             world.getEntitiesByClass(Zombie.class).forEach(this::configureZombie);
         }
         getLogger().info("Nagel Zombie Survival carregado: armas, nutricao, estacoes e hordas ativas.");
+        getLogger().info("Controle de spawn: " + nightZombieCapPerPlayer + " por jogador, distancia minima "
+            + Math.round(minimumZombieSpawnDistance) + ", luz maxima " + maximumZombieSpawnBlockLight
+            + ", somente ao ar livre: " + zombiesSpawnOutdoorsOnly + ".");
     }
 
     @Override
@@ -320,24 +333,30 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             if (isNaturalMonsterSpawn(event.getSpawnReason())) {
                 Location location = event.getLocation().clone();
                 event.setCancelled(true);
-                if (!isDaytime(location.getWorld())) {
+                if (!isDaytime(location.getWorld()) && canSpawnZombieAt(location)
+                    && canSpawnMoreZombies(location.getWorld())) {
                     getServer().getScheduler().runTask(this, () -> {
-                        if (location.isWorldLoaded()) spawnZombieVariant(location);
+                        if (location.isWorldLoaded() && canSpawnZombieAt(location)
+                            && canSpawnMoreZombies(location.getWorld())) spawnZombieVariant(location);
                     });
                 }
             }
             return;
         }
         if (!(event.getEntity() instanceof Zombie zombie)) return;
-        if (isNaturalMonsterSpawn(event.getSpawnReason()) && isDaytime(zombie.getWorld())) {
-            event.setCancelled(true);
-            return;
+        if (isNaturalMonsterSpawn(event.getSpawnReason())) {
+            if (isDaytime(zombie.getWorld()) || !canSpawnZombieAt(event.getLocation())
+                || !canSpawnMoreZombies(zombie.getWorld())) {
+                event.setCancelled(true);
+                return;
+            }
         }
         if (zombie.getType() != EntityType.ZOMBIE && isNaturalMonsterSpawn(event.getSpawnReason())) {
             Location location = event.getLocation().clone();
             event.setCancelled(true);
             getServer().getScheduler().runTask(this, () -> {
-                if (location.isWorldLoaded()) spawnZombieVariant(location);
+                if (location.isWorldLoaded() && canSpawnZombieAt(location)
+                    && canSpawnMoreZombies(location.getWorld())) spawnZombieVariant(location);
             });
             return;
         }
@@ -362,6 +381,39 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
 
     private boolean isDaytime(World world) {
         return world.getEnvironment() == World.Environment.NORMAL && world.getTime() < 12000;
+    }
+
+    private boolean canSpawnZombieAt(Location location) {
+        World world = location.getWorld();
+        Block feet = location.getBlock();
+        Block floor = feet.getRelative(BlockFace.DOWN);
+        if (!feet.isPassable() || feet.isLiquid() || !floor.getType().isSolid()
+            || feet.getLightFromBlocks() > maximumZombieSpawnBlockLight) {
+            return false;
+        }
+        if (world.getEnvironment() == World.Environment.NORMAL && zombiesSpawnOutdoorsOnly) {
+            int surfaceY = world.getHighestBlockYAt(feet.getX(), feet.getZ(), HeightMap.MOTION_BLOCKING_NO_LEAVES);
+            if (feet.getY() <= surfaceY) return false;
+        }
+        double minimumDistanceSquared = minimumZombieSpawnDistance * minimumZombieSpawnDistance;
+        for (Player player : world.getPlayers()) {
+            if (player.getGameMode() == GameMode.SURVIVAL
+                && player.getLocation().distanceSquared(location) < minimumDistanceSquared) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean canSpawnMoreZombies(World world) {
+        return world.getEntitiesByClass(Zombie.class).size() < nightZombieCap(world);
+    }
+
+    private int nightZombieCap(World world) {
+        long survivalPlayers = world.getPlayers().stream()
+            .filter(player -> player.getGameMode() == GameMode.SURVIVAL)
+            .count();
+        return (int) survivalPlayers * nightZombieCapPerPlayer;
     }
 
     @EventHandler
@@ -874,11 +926,13 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
                 if (nearbyZombies.size() >= daylightZombieCap
                     || ThreadLocalRandom.current().nextDouble() > daylightSpawnChance) continue;
                 double angle = ThreadLocalRandom.current().nextDouble(Math.PI * 2);
-                double distance = ThreadLocalRandom.current().nextDouble(20.0, 30.0);
+                double distance = ThreadLocalRandom.current().nextDouble(38.0, 54.0);
                 int x = player.getLocation().getBlockX() + (int) (Math.cos(angle) * distance);
                 int z = player.getLocation().getBlockZ() + (int) (Math.sin(angle) * distance);
-                int y = world.getHighestBlockYAt(x, z) + 1;
-                Zombie zombie = spawnZombieVariant(new Location(world, x + 0.5, y, z + 0.5));
+                int y = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES) + 1;
+                Location spawn = new Location(world, x + 0.5, y, z + 0.5);
+                if (!canSpawnZombieAt(spawn)) continue;
+                Zombie zombie = spawnZombieVariant(spawn);
                 zombie.setTarget(player);
             }
         }
@@ -886,15 +940,21 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
 
     private void spawnHorde(Player player) {
         World world = player.getWorld();
-        player.sendTitle(ChatColor.DARK_RED + "A HORDA CHEGOU", ChatColor.GRAY + "Defenda seu abrigo", 10, 70, 20);
-        for (int i = 0; i < hordeSize; i++) {
+        int spawned = 0;
+        for (int attempt = 0; attempt < hordeSize * 8 && spawned < hordeSize && canSpawnMoreZombies(world); attempt++) {
             double angle = ThreadLocalRandom.current().nextDouble(Math.PI * 2);
-            double distance = ThreadLocalRandom.current().nextDouble(18.0, 28.0);
+            double distance = ThreadLocalRandom.current().nextDouble(40.0, 56.0);
             int x = player.getLocation().getBlockX() + (int) (Math.cos(angle) * distance);
             int z = player.getLocation().getBlockZ() + (int) (Math.sin(angle) * distance);
-            int y = world.getHighestBlockYAt(x, z) + 1;
-            Zombie zombie = spawnZombieVariant(new Location(world, x + 0.5, y, z + 0.5));
+            int y = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES) + 1;
+            Location spawn = new Location(world, x + 0.5, y, z + 0.5);
+            if (!canSpawnZombieAt(spawn)) continue;
+            Zombie zombie = spawnZombieVariant(spawn);
             zombie.setTarget(player);
+            spawned++;
+        }
+        if (spawned > 0) {
+            player.sendTitle(ChatColor.DARK_RED + "A HORDA CHEGOU", ChatColor.GRAY + "Defenda seu abrigo", 10, 70, 20);
         }
     }
 
@@ -1078,6 +1138,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private void tickZombieAtmosphere() {
         ThreadLocalRandom random = ThreadLocalRandom.current();
         for (World world : Bukkit.getWorlds()) {
+            enforceNightZombieCap(world);
             for (Zombie zombie : world.getEntitiesByClass(Zombie.class)) {
                 zombie.setShouldBurnInDay(false);
                 if (zombie.getFireTicks() > 0) zombie.setFireTicks(0);
@@ -1094,6 +1155,26 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
                 }
             }
         }
+    }
+
+    private void enforceNightZombieCap(World world) {
+        if (isDaytime(world)) return;
+        int cap = nightZombieCap(world);
+        List<Zombie> zombies = new ArrayList<>(world.getEntitiesByClass(Zombie.class));
+        if (zombies.size() <= cap) return;
+        zombies.sort((first, second) -> Double.compare(
+            distanceToNearestPlayerSquared(second), distanceToNearestPlayerSquared(first)));
+        while (zombies.size() > cap) zombies.remove(0).remove();
+    }
+
+    private double distanceToNearestPlayerSquared(Zombie zombie) {
+        double nearest = Double.MAX_VALUE;
+        for (Player player : zombie.getWorld().getPlayers()) {
+            if (player.getGameMode() == GameMode.SURVIVAL) {
+                nearest = Math.min(nearest, player.getLocation().distanceSquared(zombie.getLocation()));
+            }
+        }
+        return nearest;
     }
 
     private void playBerserkerRoar(Zombie zombie) {

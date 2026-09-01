@@ -60,6 +60,11 @@ proximidade equivalente sem duplicar o dano nos clientes Java.
   escopeta empurra proporcionalmente ao numero de chumbos que acertam.
 - Tiros atraem zumbis.
 - A cada dez dias surge uma horda durante a noite.
+- A noite aceita no maximo oito zumbis carregados por jogador. Hordas especiais
+  possuem no maximo quatro novos infectados por jogador e respeitam esse limite.
+- Infectados surgem a pelo menos 36 blocos, somente ao ar livre, sobre piso
+  solido e com luz de blocos igual a zero. Tetos, tochas, lanternas e outras
+  fontes de luz impedem novos nascimentos dentro das construcoes.
 - Cerca de 16% dos zumbis racham e quebram blocos; tipos fortes possuem maior
   chance e todo Berserker e quebrador. Baus, portais, obsidiana, bedrock e os
   12 blocos ao redor do spawn sao protegidos.
