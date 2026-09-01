@@ -12,12 +12,12 @@ mundo nem os dados do Nagel Craftlandia.
 
 ## Armas
 
-| Arma | Controle | Pente | Alcance |
-| --- | --- | ---: | ---: |
-| Pistola 9mm | ataque/R2 | 12 | 38 blocos |
-| Escopeta | ataque/R2 | 6 | 24 blocos |
-| Rifle de assalto | ataque/R2 | 30 | 65 blocos |
-| Rifle de precisao | L2 para mirar e ataque/R2 para atirar | 5 | 130 blocos |
+| Arma | Controle | Dano base | Pente | Alcance |
+| --- | --- | ---: | ---: | ---: |
+| Pistola 9mm | ataque/R2 | 3 coracoes | 12 | 38 blocos |
+| Escopeta | ataque/R2 | ate 12 coracoes | 6 | 24 blocos |
+| Rifle de assalto | ataque/R2 | 6 coracoes | 30 | 65 blocos |
+| Rifle de precisao | L2 para mirar e disparar ao sair da mira | 15 coracoes | 5 | 130 blocos |
 
 Use o botao secundario ou o controle `Soltar item` para recarregar; a arma nao
 e jogada no chao. Na sniper, use `agachar + botao secundario`, pois o secundario
@@ -38,7 +38,11 @@ de teste.
   e esqueletos nao ocupam o mapa.
 - Cambaleantes, errantes, cacadores, corredores, brutamontes e alfas possuem
   velocidades, vida e percepcao diferentes.
+- 78% dos infectados sao lentos; cacadores, corredores, brutamontes e alfas
+  formam os 22% restantes.
 - Zumbis nao queimam durante o dia e emitem gemidos com tons diferentes.
+- A pistola possui recuo leve, o rifle recuo medio, a sniper recuo forte e a
+  escopeta empurra proporcionalmente ao numero de chumbos que acertam.
 - Tiros atraem zumbis.
 - A cada dez dias surge uma horda durante a noite.
 - Zumbis perseguindo jogadores racham e quebram blocos. Baus, portais,

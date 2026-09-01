@@ -47,6 +47,7 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import io.papermc.paper.event.player.PlayerStopUsingItemEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -89,6 +90,14 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         long lastHit;
     }
 
+    private static final class ShotImpact {
+        double damage;
+        int pellets;
+        boolean headshot;
+    }
+
+    private record ShotHit(LivingEntity target, boolean headshot) {}
+
     private final Map<UUID, Long> lastShot = new HashMap<>();
     private final Set<UUID> reloading = new HashSet<>();
     private final Set<UUID> applyingWeaponDamage = new HashSet<>();
@@ -115,6 +124,8 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private boolean zombiesSpawnInDaylight;
     private boolean friendlyFire;
     private int protectedSpawnRadius;
+    private double daylightSpawnChance;
+    private int daylightZombieCap;
 
     @Override
     public void onEnable() {
@@ -126,6 +137,8 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         zombiesSpawnInDaylight = getConfig().getBoolean("zombies-spawn-in-daylight", true);
         friendlyFire = getConfig().getBoolean("friendly-fire", false);
         protectedSpawnRadius = Math.max(0, getConfig().getInt("protected-spawn-radius", 12));
+        daylightSpawnChance = Math.max(0.0, Math.min(1.0, getConfig().getDouble("daylight-spawn-chance", 0.12)));
+        daylightZombieCap = Math.max(0, getConfig().getInt("daylight-zombie-cap", 3));
 
         weaponKey = new NamespacedKey(this, "weapon");
         ammoKey = new NamespacedKey(this, "ammo");
@@ -237,6 +250,20 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         });
     }
 
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onStopUsingSniper(PlayerStopUsingItemEvent event) {
+        if (event.getTicksHeldFor() < 3 || weaponFrom(event.getItem()) != WeaponType.SNIPER) {
+            return;
+        }
+        Player player = event.getPlayer();
+        getServer().getScheduler().runTask(this, () -> {
+            ItemStack held = player.getInventory().getItemInMainHand();
+            if (weaponFrom(held) == WeaponType.SNIPER && !player.isSneaking()) {
+                fire(player, held, WeaponType.SNIPER);
+            }
+        });
+    }
+
     @EventHandler(ignoreCancelled = true)
     public void onConsume(PlayerItemConsumeEvent event) {
         double[] values = foodValues.get(event.getItem().getType());
@@ -256,15 +283,19 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             if (isNaturalMonsterSpawn(event.getSpawnReason())) {
                 Location location = event.getLocation().clone();
                 event.setCancelled(true);
-                getServer().getScheduler().runTask(this, () -> {
-                    if (location.isWorldLoaded()) {
-                        location.getWorld().spawn(location, Zombie.class);
-                    }
-                });
+                if (!isDaytime(location.getWorld())) {
+                    getServer().getScheduler().runTask(this, () -> {
+                        if (location.isWorldLoaded()) location.getWorld().spawn(location, Zombie.class);
+                    });
+                }
             }
             return;
         }
         if (!(event.getEntity() instanceof Zombie zombie)) return;
+        if (isNaturalMonsterSpawn(event.getSpawnReason()) && isDaytime(zombie.getWorld())) {
+            event.setCancelled(true);
+            return;
+        }
         if (zombie.getType() != EntityType.ZOMBIE && isNaturalMonsterSpawn(event.getSpawnReason())) {
             Location location = event.getLocation().clone();
             event.setCancelled(true);
@@ -290,6 +321,10 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private boolean isNaturalMonsterSpawn(CreatureSpawnEvent.SpawnReason reason) {
         return Set.of("NATURAL", "CHUNK_GEN", "PATROL", "REINFORCEMENTS", "JOCKEY")
             .contains(reason.name());
+    }
+
+    private boolean isDaytime(World world) {
+        return world.getEnvironment() == World.Environment.NORMAL && world.getTime() < 12000;
     }
 
     @EventHandler
@@ -362,10 +397,17 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             weapon == WeaponType.SHOTGUN ? 0.65f : 1.35f);
         player.getWorld().spawnParticle(Particle.SMOKE, player.getEyeLocation().add(player.getLocation().getDirection().multiply(0.7)), 5, 0.04, 0.04, 0.04, 0.01);
 
+        Map<LivingEntity, ShotImpact> impacts = new HashMap<>();
         for (int pellet = 0; pellet < weapon.pellets; pellet++) {
             Vector direction = spread(player.getEyeLocation().getDirection(), weapon.spread);
-            shootRay(player, direction, weapon);
+            ShotHit hit = traceShot(player, direction, weapon);
+            if (hit == null) continue;
+            ShotImpact impact = impacts.computeIfAbsent(hit.target(), ignored -> new ShotImpact());
+            impact.damage += weapon.damage * (hit.headshot() ? 1.75 : 1.0);
+            impact.pellets++;
+            impact.headshot |= hit.headshot();
         }
+        impacts.forEach((target, impact) -> applyWeaponImpact(player, target, weapon, impact));
         attractZombies(player.getLocation(), weapon == WeaponType.SNIPER ? 64.0 : 42.0);
 
         int remaining = magazine - 1;
@@ -375,7 +417,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         }
     }
 
-    private void shootRay(Player player, Vector direction, WeaponType weapon) {
+    private ShotHit traceShot(Player player, Vector direction, WeaponType weapon) {
         Location origin = player.getEyeLocation();
         RayTraceResult result = player.getWorld().rayTrace(
             origin, direction, weapon.range, FluidCollisionMode.NEVER, true, 0.35,
@@ -389,23 +431,36 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         drawTracer(origin, direction, travel);
 
         if (result == null || !(result.getHitEntity() instanceof LivingEntity target)) {
-            return;
+            return null;
         }
-        double damage = weapon.damage;
         double headY = target.getBoundingBox().getMaxY() - 0.35;
-        if (result.getHitPosition().getY() >= headY) {
-            damage *= 1.75;
+        return new ShotHit(target, result.getHitPosition().getY() >= headY);
+    }
+
+    private void applyWeaponImpact(Player player, LivingEntity target, WeaponType weapon, ShotImpact impact) {
+        if (impact.headshot) {
             player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.7f, 1.8f);
-            player.sendActionBar(ChatColor.RED + "HEADSHOT" + ChatColor.GRAY + " - " + String.format(Locale.US, "%.1f", damage) + " dano");
+            player.sendActionBar(ChatColor.RED + "HEADSHOT" + ChatColor.GRAY + " - " + String.format(Locale.US, "%.1f", impact.damage) + " dano");
         }
         UUID shooterId = player.getUniqueId();
         applyingWeaponDamage.add(shooterId);
         try {
-            target.damage(damage, player);
+            target.damage(impact.damage, player);
         } finally {
             applyingWeaponDamage.remove(shooterId);
         }
+        applyWeaponKnockback(player, target, weapon, impact.pellets);
         target.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, target.getLocation().add(0, 1, 0), 4, 0.2, 0.3, 0.2, 0.05);
+    }
+
+    private void applyWeaponKnockback(Player player, LivingEntity target, WeaponType weapon, int pelletsHit) {
+        double strength = weapon.knockback * pelletsHit / weapon.pellets;
+        Vector direction = target.getLocation().toVector().subtract(player.getLocation().toVector()).setY(0);
+        if (direction.lengthSquared() < 0.001) direction = player.getLocation().getDirection().setY(0);
+        direction.normalize().multiply(strength);
+        Vector velocity = target.getVelocity().add(direction);
+        velocity.setY(Math.min(0.55, Math.max(velocity.getY(), 0.08) + strength * 0.18));
+        target.setVelocity(velocity);
     }
 
     private void drawTracer(Location origin, Vector direction, double distance) {
@@ -669,11 +724,19 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             if (time >= 12000 || world.getEnvironment() != World.Environment.NORMAL) continue;
             for (Player player : world.getPlayers()) {
                 if (player.getGameMode() != GameMode.SURVIVAL) continue;
-                int nearby = 0;
-                for (Entity entity : world.getNearbyEntities(player.getLocation(), 32, 16, 32)) {
-                    if (entity instanceof Zombie) nearby++;
+                List<Zombie> nearbyZombies = new ArrayList<>();
+                for (Entity entity : world.getNearbyEntities(player.getLocation(), 48, 20, 48)) {
+                    if (entity instanceof Zombie zombie) nearbyZombies.add(zombie);
                 }
-                if (nearby >= 5 || ThreadLocalRandom.current().nextDouble() > 0.45) continue;
+                nearbyZombies.sort((first, second) -> Double.compare(
+                    second.getLocation().distanceSquared(player.getLocation()),
+                    first.getLocation().distanceSquared(player.getLocation())
+                ));
+                while (nearbyZombies.size() > daylightZombieCap) {
+                    nearbyZombies.remove(0).remove();
+                }
+                if (nearbyZombies.size() >= daylightZombieCap
+                    || ThreadLocalRandom.current().nextDouble() > daylightSpawnChance) continue;
                 double angle = ThreadLocalRandom.current().nextDouble(Math.PI * 2);
                 double distance = ThreadLocalRandom.current().nextDouble(20.0, 30.0);
                 int x = player.getLocation().getBlockX() + (int) (Math.cos(angle) * distance);
@@ -704,11 +767,11 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         String type = data.get(zombieTypeKey, PersistentDataType.STRING);
         if (type == null) {
             double roll = ThreadLocalRandom.current().nextDouble();
-            type = roll < 0.18 ? "shambler"
-                : roll < 0.53 ? "walker"
-                : roll < 0.75 ? "stalker"
-                : roll < 0.91 ? "runner"
-                : roll < 0.98 ? "brute"
+            type = roll < 0.30 ? "shambler"
+                : roll < 0.78 ? "walker"
+                : roll < 0.90 ? "stalker"
+                : roll < 0.95 ? "runner"
+                : roll < 0.99 ? "brute"
                 : "infected";
             data.set(zombieTypeKey, PersistentDataType.STRING, type);
         }
@@ -729,37 +792,44 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         zombie.setHealth(Math.min(zombie.getHealth(), 20.0));
         switch (type) {
             case "shambler" -> {
-                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.13, 0.18));
+                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.10, 0.14));
+                setAttribute(zombie, Attribute.MAX_HEALTH, 18.0);
+                setAttribute(zombie, Attribute.ATTACK_DAMAGE, 3.0);
+                zombie.setHealth(Math.min(zombie.getHealth(), 18.0));
                 zombie.setCustomName(ChatColor.DARK_GRAY + "Cambaleante");
             }
             case "stalker" -> {
-                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.26, 0.31));
+                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.24, 0.28));
+                setAttribute(zombie, Attribute.MAX_HEALTH, 22.0);
+                setAttribute(zombie, Attribute.ATTACK_DAMAGE, 5.0);
+                zombie.setHealth(Math.max(zombie.getHealth(), 22.0));
                 setAttribute(zombie, Attribute.FOLLOW_RANGE, 52.0);
                 zombie.setCustomName(ChatColor.GOLD + "Cacador");
             }
             case "runner" -> {
-                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.34, 0.40));
-                setAttribute(zombie, Attribute.MAX_HEALTH, 16.0);
-                zombie.setHealth(Math.min(zombie.getHealth(), 16.0));
+                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.31, 0.36));
+                setAttribute(zombie, Attribute.MAX_HEALTH, 14.0);
+                zombie.setHealth(Math.min(zombie.getHealth(), 14.0));
                 zombie.setCustomName(ChatColor.YELLOW + "Corredor");
             }
             case "brute" -> {
-                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.18, 0.22));
-                setAttribute(zombie, Attribute.MAX_HEALTH, 52.0);
-                setAttribute(zombie, Attribute.ATTACK_DAMAGE, 9.0);
-                setAttribute(zombie, Attribute.KNOCKBACK_RESISTANCE, 0.65);
-                zombie.setHealth(Math.max(zombie.getHealth(), 52.0));
+                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.15, 0.19));
+                setAttribute(zombie, Attribute.MAX_HEALTH, 60.0);
+                setAttribute(zombie, Attribute.ATTACK_DAMAGE, 10.0);
+                setAttribute(zombie, Attribute.KNOCKBACK_RESISTANCE, 0.55);
+                zombie.setHealth(Math.max(zombie.getHealth(), 60.0));
                 zombie.setCustomName(ChatColor.DARK_RED + "Brutamontes");
             }
             case "infected" -> {
-                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.29, 0.34));
-                setAttribute(zombie, Attribute.MAX_HEALTH, 32.0);
+                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.25, 0.30));
+                setAttribute(zombie, Attribute.MAX_HEALTH, 36.0);
+                setAttribute(zombie, Attribute.ATTACK_DAMAGE, 7.0);
                 setAttribute(zombie, Attribute.FOLLOW_RANGE, 64.0);
-                zombie.setHealth(Math.max(zombie.getHealth(), 32.0));
+                zombie.setHealth(Math.max(zombie.getHealth(), 36.0));
                 zombie.setCustomName(ChatColor.RED + "Infectado Alfa");
             }
             default -> {
-                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.19, 0.25));
+                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.17, 0.22));
                 zombie.setCustomName(ChatColor.GRAY + "Errante");
             }
         }
