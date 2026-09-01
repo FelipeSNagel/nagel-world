@@ -106,6 +106,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
 
     private final Map<UUID, Long> lastShot = new HashMap<>();
     private final Map<UUID, Long> automaticFireUntil = new HashMap<>();
+    private final Map<UUID, Long> lastMeleeDamage = new HashMap<>();
     private final Set<UUID> reloading = new HashSet<>();
     private final Set<UUID> applyingWeaponDamage = new HashSet<>();
     private final Map<String, BlockProgress> blockDamage = new HashMap<>();
@@ -245,6 +246,8 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         WeaponType weapon = weaponFrom(item);
         if (weapon != null) {
             triggerFire(event.getPlayer(), item, weapon);
+        } else {
+            scheduleMeleeFallback(event.getPlayer());
         }
     }
 
@@ -259,6 +262,9 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         ItemStack item = player.getInventory().getItemInMainHand();
         WeaponType weapon = weaponFrom(item);
         if (weapon == null) {
+            if (event.getEntity() instanceof Zombie) {
+                lastMeleeDamage.put(player.getUniqueId(), System.currentTimeMillis());
+            }
             return;
         }
         event.setCancelled(true);
@@ -466,6 +472,29 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             if (weaponFrom(held) != WeaponType.SMG) return true;
             fire(player, held, WeaponType.SMG);
             return false;
+        });
+    }
+
+    private void scheduleMeleeFallback(Player player) {
+        long swingAt = System.currentTimeMillis();
+        UUID playerId = player.getUniqueId();
+        getServer().getScheduler().runTask(this, () -> {
+            if (!player.isOnline() || lastMeleeDamage.getOrDefault(playerId, 0L) >= swingAt
+                || weaponFrom(player.getInventory().getItemInMainHand()) != null) {
+                return;
+            }
+            Location origin = player.getEyeLocation();
+            Vector direction = origin.getDirection();
+            RayTraceResult result = player.getWorld().rayTrace(
+                origin, direction, 3.4, FluidCollisionMode.NEVER, true, 0.25,
+                entity -> entity instanceof Zombie
+            );
+            if (result == null || !(result.getHitEntity() instanceof Zombie zombie)) return;
+            double attackDamage = 1.0;
+            AttributeInstance attribute = player.getAttribute(Attribute.ATTACK_DAMAGE);
+            if (attribute != null) attackDamage = Math.max(1.0, attribute.getValue());
+            lastMeleeDamage.put(playerId, System.currentTimeMillis());
+            zombie.damage(attackDamage, player);
         });
     }
 

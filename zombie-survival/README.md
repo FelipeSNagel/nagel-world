@@ -32,6 +32,9 @@ de teste.
 
 A submetralhadora usa a mesma municao 9 mm da pistola. Segure o ataque para
 manter a rajada automatica de 10 tiros por segundo.
+Ataques corpo a corpo continuam com o dano normal do Minecraft. Quando um
+cliente Bedrock envia apenas a animacao do golpe, o servidor aplica um golpe de
+proximidade equivalente sem duplicar o dano nos clientes Java.
 
 ## Sobrevivencia
 
