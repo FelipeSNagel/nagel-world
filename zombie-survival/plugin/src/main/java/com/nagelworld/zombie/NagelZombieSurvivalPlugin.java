@@ -91,6 +91,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
 
     private final Map<UUID, Long> lastShot = new HashMap<>();
     private final Set<UUID> reloading = new HashSet<>();
+    private final Set<UUID> applyingWeaponDamage = new HashSet<>();
     private final Map<String, BlockProgress> blockDamage = new HashMap<>();
     private final Map<UUID, Double> lastTemperature = new HashMap<>();
     private final Map<UUID, Long> lastHordeDay = new HashMap<>();
@@ -181,9 +182,13 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         if (action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK) {
             event.setCancelled(true);
             fire(event.getPlayer(), event.getItem(), weapon);
-        } else if (weapon != WeaponType.SNIPER
-            && (action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK)) {
-            event.setCancelled(true);
+        } else if (action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK) {
+            if (weapon != WeaponType.SNIPER || event.getPlayer().isSneaking()) {
+                reload(event.getPlayer(), event.getItem(), weapon);
+            }
+            if (weapon != WeaponType.SNIPER || event.getPlayer().isSneaking()) {
+                event.setCancelled(true);
+            }
         }
     }
 
@@ -204,6 +209,9 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         if (!(event.getDamager() instanceof Player player)) {
             return;
         }
+        if (applyingWeaponDamage.contains(player.getUniqueId())) {
+            return;
+        }
         ItemStack item = player.getInventory().getItemInMainHand();
         WeaponType weapon = weaponFrom(item);
         if (weapon == null) {
@@ -221,7 +229,12 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             return;
         }
         event.setCancelled(true);
-        reload(event.getPlayer(), item, weapon);
+        Player player = event.getPlayer();
+        getServer().getScheduler().runTask(this, () -> {
+            ItemStack held = player.getInventory().getItemInMainHand();
+            WeaponType heldWeapon = weaponFrom(held);
+            if (heldWeapon == weapon) reload(player, held, weapon);
+        });
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -385,7 +398,13 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.7f, 1.8f);
             player.sendActionBar(ChatColor.RED + "HEADSHOT" + ChatColor.GRAY + " - " + String.format(Locale.US, "%.1f", damage) + " dano");
         }
-        target.damage(damage, player);
+        UUID shooterId = player.getUniqueId();
+        applyingWeaponDamage.add(shooterId);
+        try {
+            target.damage(damage, player);
+        } finally {
+            applyingWeaponDamage.remove(shooterId);
+        }
         target.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, target.getLocation().add(0, 1, 0), 4, 0.2, 0.3, 0.2, 0.05);
     }
 
@@ -417,6 +436,12 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         }
         int current = magazine(item, weapon);
         int needed = weapon.magazineSize - current;
+        if (needed <= 0) {
+            reloading.remove(id);
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.7f, 1.5f);
+            player.sendActionBar(ChatColor.GRAY + "Pente cheio" + ChatColor.DARK_GRAY + " [" + current + "/" + weapon.magazineSize + "]");
+            return;
+        }
         int available = countAmmo(player, weapon.ammoId);
         int toLoad = Math.min(needed, available);
         if (toLoad <= 0) {
@@ -796,7 +821,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             ChatColor.GRAY + "Municao: " + ammoName(weapon.ammoId),
             ChatColor.GRAY + "Pente: " + weapon.magazineSize,
             ChatColor.DARK_GRAY + "Ataque: disparar",
-            ChatColor.DARK_GRAY + "Soltar item: recarregar"
+            ChatColor.DARK_GRAY + "Secundario ou soltar item: recarregar"
         ));
         meta.getPersistentDataContainer().set(weaponKey, PersistentDataType.STRING, weapon.id);
         meta.getPersistentDataContainer().set(magazineKey, PersistentDataType.INTEGER, 0);
@@ -909,7 +934,8 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         player.sendMessage(ChatColor.GOLD + "Escopeta: " + ChatColor.GRAY + "ferro, madeira e redstone.");
         player.sendMessage(ChatColor.GOLD + "Rifle: " + ChatColor.GRAY + "ferro, cobre, redstone e diamante.");
         player.sendMessage(ChatColor.GOLD + "Sniper: " + ChatColor.GRAY + "luneta, ferro, redstone e diamante.");
-        player.sendMessage(ChatColor.GRAY + "Ataque dispara. Soltar item recarrega sem perder a arma.");
+        player.sendMessage(ChatColor.GRAY + "Ataque dispara. Secundario ou soltar item recarrega.");
+        player.sendMessage(ChatColor.DARK_GRAY + "Na sniper: agache e use o secundario para recarregar.");
         player.sendMessage(ChatColor.DARK_GRAY + "No Java, associe 'Soltar item' a tecla R se preferir.");
         player.sendMessage(ChatColor.GRAY + "As receitas aparecem no livro da bancada.");
     }

@@ -19,11 +19,13 @@ mundo nem os dados do Nagel Craftlandia.
 | Rifle de assalto | ataque/R2 | 30 | 65 blocos |
 | Rifle de precisao | L2 para mirar e ataque/R2 para atirar | 5 | 130 blocos |
 
-Use o controle `Soltar item` para recarregar; a arma nao e jogada no chao. No
-Java, esse controle pode ser associado a tecla `R`. `/recarregar` faz a mesma
-coisa. A recarga tambem inicia automaticamente quando o pente termina. Cada
-arma possui municao propria e todas as receitas aparecem no livro da bancada.
-Operadores podem usar `/kitarmas` para receber o arsenal de teste.
+Use o botao secundario ou o controle `Soltar item` para recarregar; a arma nao
+e jogada no chao. Na sniper, use `agachar + botao secundario`, pois o secundario
+sozinho ativa a mira. No Java, `Soltar item` pode ser associado a tecla `R`.
+`/recarregar` faz a mesma coisa. A recarga tambem inicia automaticamente quando
+o pente termina. Cada arma possui municao propria e todas as receitas aparecem
+no livro da bancada. Operadores podem usar `/kitarmas` para receber o arsenal
+de teste.
 
 ## Sobrevivencia
 
