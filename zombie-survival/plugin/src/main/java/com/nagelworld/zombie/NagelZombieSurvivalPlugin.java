@@ -28,6 +28,7 @@ import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
@@ -37,7 +38,12 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.EntityCombustEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerAnimationEvent;
+import org.bukkit.event.player.PlayerAnimationType;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -140,6 +146,13 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         getServer().getScheduler().runTaskTimer(this, this::tickPlayers, 40L, 40L);
         getServer().getScheduler().runTaskTimer(this, this::tickZombieBreaking, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, this::tickHordes, 200L, 200L);
+        getServer().getScheduler().runTaskTimer(this, this::tickZombieAtmosphere, 80L, 80L);
+        for (World world : Bukkit.getWorlds()) {
+            world.getEntitiesByClass(Monster.class).stream()
+                .filter(monster -> !(monster instanceof Zombie))
+                .forEach(Entity::remove);
+            world.getEntitiesByClass(Zombie.class).forEach(this::configureZombie);
+        }
         getLogger().info("Nagel Zombie Survival carregado: armas, nutricao, estacoes e hordas ativas.");
     }
 
@@ -165,15 +178,50 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         }
 
         Action action = event.getAction();
-        boolean trigger = weapon == WeaponType.SNIPER
-            ? action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK
-            : action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK;
-        if (!trigger) {
+        if (action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK) {
+            event.setCancelled(true);
+            fire(event.getPlayer(), event.getItem(), weapon);
+        } else if (weapon != WeaponType.SNIPER
+            && (action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onArmSwing(PlayerAnimationEvent event) {
+        if (event.getAnimationType() != PlayerAnimationType.ARM_SWING) {
             return;
         }
+        ItemStack item = event.getPlayer().getInventory().getItemInMainHand();
+        WeaponType weapon = weaponFrom(item);
+        if (weapon != null) {
+            fire(event.getPlayer(), item, weapon);
+        }
+    }
 
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onWeaponMelee(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Player player)) {
+            return;
+        }
+        ItemStack item = player.getInventory().getItemInMainHand();
+        WeaponType weapon = weaponFrom(item);
+        if (weapon == null) {
+            return;
+        }
         event.setCancelled(true);
-        fire(event.getPlayer(), event.getItem(), weapon);
+        fire(player, item, weapon);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onReloadDrop(PlayerDropItemEvent event) {
+        ItemStack item = event.getItemDrop().getItemStack();
+        WeaponType weapon = weaponFrom(item);
+        if (weapon == null) {
+            return;
+        }
+        event.setCancelled(true);
+        reload(event.getPlayer(), item, weapon);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -191,13 +239,44 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
 
     @EventHandler(ignoreCancelled = true)
     public void onZombieSpawn(CreatureSpawnEvent event) {
-        if (!(event.getEntity() instanceof Zombie zombie)) {
+        if (event.getEntity() instanceof Monster && !(event.getEntity() instanceof Zombie)) {
+            if (isNaturalMonsterSpawn(event.getSpawnReason())) {
+                Location location = event.getLocation().clone();
+                event.setCancelled(true);
+                getServer().getScheduler().runTask(this, () -> {
+                    if (location.isWorldLoaded()) {
+                        location.getWorld().spawn(location, Zombie.class);
+                    }
+                });
+            }
+            return;
+        }
+        if (!(event.getEntity() instanceof Zombie zombie)) return;
+        if (zombie.getType() != EntityType.ZOMBIE && isNaturalMonsterSpawn(event.getSpawnReason())) {
+            Location location = event.getLocation().clone();
+            event.setCancelled(true);
+            getServer().getScheduler().runTask(this, () -> {
+                if (location.isWorldLoaded()) location.getWorld().spawn(location, Zombie.class);
+            });
             return;
         }
         if (!zombiesSpawnInDaylight && zombie.getWorld().getTime() < 12000) {
             return;
         }
         configureZombie(zombie);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onZombieCombust(EntityCombustEvent event) {
+        if (event.getEntity() instanceof Zombie) {
+            event.setCancelled(true);
+            event.getEntity().setFireTicks(0);
+        }
+    }
+
+    private boolean isNaturalMonsterSpawn(CreatureSpawnEvent.SpawnReason reason) {
+        return Set.of("NATURAL", "CHUNK_GEN", "PATROL", "REINFORCEMENTS", "JOCKEY")
+            .contains(reason.name());
     }
 
     @EventHandler
@@ -238,6 +317,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             case "kitarmas" -> giveTestKit(player);
             case "nutricao" -> showNutrition(player);
             case "estacao" -> showSeason(player);
+            case "recarregar" -> reloadHeldWeapon(player);
             case "sethome" -> setHome(player);
             case "home" -> teleportHome(player);
             default -> { return false; }
@@ -365,6 +445,16 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             player.playSound(player.getLocation(), Sound.BLOCK_IRON_TRAPDOOR_OPEN, 0.7f, 1.6f);
             player.sendActionBar(ChatColor.GREEN + "Pronto" + ChatColor.GRAY + " [" + magazine(held, weapon) + "/" + weapon.magazineSize + "]");
         }, delay);
+    }
+
+    private void reloadHeldWeapon(Player player) {
+        ItemStack item = player.getInventory().getItemInMainHand();
+        WeaponType weapon = weaponFrom(item);
+        if (weapon == null) {
+            player.sendActionBar(ChatColor.RED + "Segure uma arma para recarregar");
+            return;
+        }
+        reload(player, item, weapon);
     }
 
     private void tickPlayers() {
@@ -585,31 +675,87 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     }
 
     private void configureZombie(Zombie zombie) {
-        double roll = ThreadLocalRandom.current().nextDouble();
-        String type = "walker";
-        if (roll < 0.10) {
-            type = "runner";
-            setAttribute(zombie, Attribute.MOVEMENT_SPEED, 0.34);
-            setAttribute(zombie, Attribute.MAX_HEALTH, 16.0);
-            zombie.setHealth(16.0);
-            zombie.setCustomName(ChatColor.YELLOW + "Corredor");
-        } else if (roll < 0.16) {
-            type = "brute";
-            setAttribute(zombie, Attribute.MOVEMENT_SPEED, 0.20);
-            setAttribute(zombie, Attribute.MAX_HEALTH, 52.0);
-            setAttribute(zombie, Attribute.ATTACK_DAMAGE, 9.0);
-            setAttribute(zombie, Attribute.KNOCKBACK_RESISTANCE, 0.65);
-            zombie.setHealth(52.0);
-            zombie.setCustomName(ChatColor.DARK_RED + "Brutamontes");
-        } else if (roll < 0.24) {
-            type = "infected";
-            setAttribute(zombie, Attribute.FOLLOW_RANGE, 48.0);
-            zombie.setCustomName(ChatColor.GREEN + "Infectado");
+        PersistentDataContainer data = zombie.getPersistentDataContainer();
+        String type = data.get(zombieTypeKey, PersistentDataType.STRING);
+        if (type == null) {
+            double roll = ThreadLocalRandom.current().nextDouble();
+            type = roll < 0.18 ? "shambler"
+                : roll < 0.53 ? "walker"
+                : roll < 0.75 ? "stalker"
+                : roll < 0.91 ? "runner"
+                : roll < 0.98 ? "brute"
+                : "infected";
+            data.set(zombieTypeKey, PersistentDataType.STRING, type);
         }
+        applyZombieProfile(zombie, type);
         zombie.setCustomNameVisible(false);
         zombie.setCanBreakDoors(true);
-        if (zombiesSpawnInDaylight) zombie.setShouldBurnInDay(false);
-        zombie.getPersistentDataContainer().set(zombieTypeKey, PersistentDataType.STRING, type);
+        zombie.setShouldBurnInDay(false);
+        zombie.setFireTicks(0);
+        zombie.setRemoveWhenFarAway(true);
+    }
+
+    private void applyZombieProfile(Zombie zombie, String type) {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        setAttribute(zombie, Attribute.FOLLOW_RANGE, 40.0);
+        setAttribute(zombie, Attribute.ATTACK_DAMAGE, 4.0);
+        setAttribute(zombie, Attribute.KNOCKBACK_RESISTANCE, 0.0);
+        setAttribute(zombie, Attribute.MAX_HEALTH, 20.0);
+        zombie.setHealth(Math.min(zombie.getHealth(), 20.0));
+        switch (type) {
+            case "shambler" -> {
+                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.13, 0.18));
+                zombie.setCustomName(ChatColor.DARK_GRAY + "Cambaleante");
+            }
+            case "stalker" -> {
+                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.26, 0.31));
+                setAttribute(zombie, Attribute.FOLLOW_RANGE, 52.0);
+                zombie.setCustomName(ChatColor.GOLD + "Cacador");
+            }
+            case "runner" -> {
+                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.34, 0.40));
+                setAttribute(zombie, Attribute.MAX_HEALTH, 16.0);
+                zombie.setHealth(Math.min(zombie.getHealth(), 16.0));
+                zombie.setCustomName(ChatColor.YELLOW + "Corredor");
+            }
+            case "brute" -> {
+                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.18, 0.22));
+                setAttribute(zombie, Attribute.MAX_HEALTH, 52.0);
+                setAttribute(zombie, Attribute.ATTACK_DAMAGE, 9.0);
+                setAttribute(zombie, Attribute.KNOCKBACK_RESISTANCE, 0.65);
+                zombie.setHealth(Math.max(zombie.getHealth(), 52.0));
+                zombie.setCustomName(ChatColor.DARK_RED + "Brutamontes");
+            }
+            case "infected" -> {
+                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.29, 0.34));
+                setAttribute(zombie, Attribute.MAX_HEALTH, 32.0);
+                setAttribute(zombie, Attribute.FOLLOW_RANGE, 64.0);
+                zombie.setHealth(Math.max(zombie.getHealth(), 32.0));
+                zombie.setCustomName(ChatColor.RED + "Infectado Alfa");
+            }
+            default -> {
+                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.19, 0.25));
+                zombie.setCustomName(ChatColor.GRAY + "Errante");
+            }
+        }
+    }
+
+    private void tickZombieAtmosphere() {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        for (World world : Bukkit.getWorlds()) {
+            for (Zombie zombie : world.getEntitiesByClass(Zombie.class)) {
+                zombie.setShouldBurnInDay(false);
+                if (zombie.getFireTicks() > 0) zombie.setFireTicks(0);
+                Player nearby = nearestPlayer(zombie.getLocation(), 28.0);
+                if (nearby == null) continue;
+                if (zombie.getTarget() == null && random.nextDouble() < 0.35) zombie.setTarget(nearby);
+                if (random.nextDouble() < 0.12) {
+                    String type = zombie.getPersistentDataContainer().get(zombieTypeKey, PersistentDataType.STRING);
+                    float pitch = "runner".equals(type) ? 1.25f : "brute".equals(type) ? 0.62f : random.nextFloat(0.78f, 1.08f);
+                    world.playSound(zombie.getLocation(), Sound.ENTITY_ZOMBIE_AMBIENT, 1.1f, pitch);
+                }
+            }
+        }
     }
 
     private void setAttribute(LivingEntity entity, Attribute attribute, double value) {
@@ -649,7 +795,8 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         meta.setLore(List.of(
             ChatColor.GRAY + "Municao: " + ammoName(weapon.ammoId),
             ChatColor.GRAY + "Pente: " + weapon.magazineSize,
-            ChatColor.DARK_GRAY + (weapon == WeaponType.SNIPER ? "L2 mira / R2 dispara" : "Use para disparar")
+            ChatColor.DARK_GRAY + "Ataque: disparar",
+            ChatColor.DARK_GRAY + "Soltar item: recarregar"
         ));
         meta.getPersistentDataContainer().set(weaponKey, PersistentDataType.STRING, weapon.id);
         meta.getPersistentDataContainer().set(magazineKey, PersistentDataType.INTEGER, 0);
@@ -762,6 +909,8 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         player.sendMessage(ChatColor.GOLD + "Escopeta: " + ChatColor.GRAY + "ferro, madeira e redstone.");
         player.sendMessage(ChatColor.GOLD + "Rifle: " + ChatColor.GRAY + "ferro, cobre, redstone e diamante.");
         player.sendMessage(ChatColor.GOLD + "Sniper: " + ChatColor.GRAY + "luneta, ferro, redstone e diamante.");
+        player.sendMessage(ChatColor.GRAY + "Ataque dispara. Soltar item recarrega sem perder a arma.");
+        player.sendMessage(ChatColor.DARK_GRAY + "No Java, associe 'Soltar item' a tecla R se preferir.");
         player.sendMessage(ChatColor.GRAY + "As receitas aparecem no livro da bancada.");
     }
 

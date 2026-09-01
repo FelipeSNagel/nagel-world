@@ -35,23 +35,39 @@ cp "$PROJECT/plugin/src/main/resources/config.yml" "$BUILD/classes/config.yml"
 
 cp -R "$PROJECT/resource-packs/java" "$BUILD/java-pack"
 mkdir -p "$BUILD/java-pack/assets/nagelzombie/textures/item"
-cp "$BUILD/generated-textures"/*.png "$BUILD/java-pack/assets/nagelzombie/textures/item/"
+cp "$BUILD/generated-textures"/pistol.png "$BUILD/generated-textures"/shotgun.png \
+  "$BUILD/generated-textures"/rifle.png "$BUILD/generated-textures"/sniper.png \
+  "$BUILD/generated-textures"/light_ammo.png "$BUILD/generated-textures"/shell.png \
+  "$BUILD/generated-textures"/rifle_ammo.png "$BUILD/generated-textures"/sniper_ammo.png \
+  "$BUILD/generated-textures"/gun_dark.png "$BUILD/generated-textures"/gun_metal.png \
+  "$BUILD/generated-textures"/gun_wood.png "$BUILD/generated-textures"/gun_olive.png \
+  "$BUILD/generated-textures"/gun_scope.png \
+  "$BUILD/java-pack/assets/nagelzombie/textures/item/"
+mkdir -p "$BUILD/java-pack/assets/minecraft/textures/entity/zombie"
+cp "$BUILD/generated-textures/zombie.png" "$BUILD/java-pack/assets/minecraft/textures/entity/zombie/zombie.png"
 
 for item in pistol shotgun rifle sniper light_ammo shell rifle_ammo sniper_ammo; do
   mkdir -p "$BUILD/java-pack/assets/nagelzombie/items" "$BUILD/java-pack/assets/nagelzombie/models/item"
   printf '{"model":{"type":"minecraft:model","model":"nagelzombie:item/%s"}}\n' "$item" \
     > "$BUILD/java-pack/assets/nagelzombie/items/$item.json"
-  parent="minecraft:item/generated"
-  case "$item" in pistol|shotgun|rifle|sniper) parent="minecraft:item/handheld" ;; esac
-  printf '{"parent":"%s","textures":{"layer0":"nagelzombie:item/%s"}}\n' "$parent" "$item" \
-    > "$BUILD/java-pack/assets/nagelzombie/models/item/$item.json"
+  case "$item" in
+    pistol|shotgun|rifle|sniper) ;;
+    *) printf '{"parent":"minecraft:item/generated","textures":{"layer0":"nagelzombie:item/%s"}}\n' "$item" \
+      > "$BUILD/java-pack/assets/nagelzombie/models/item/$item.json" ;;
+  esac
 done
 find "$BUILD/java-pack" -type f -exec touch -t 202601010000 {} +
 (cd "$BUILD/java-pack" && find . -type f -print | LC_ALL=C sort | zip -q "$DIST/NagelZombieJava.zip" -@)
 
 cp -R "$PROJECT/resource-packs/bedrock" "$BUILD/bedrock-pack"
 mkdir -p "$BUILD/bedrock-pack/textures/items"
-cp "$BUILD/generated-textures"/*.png "$BUILD/bedrock-pack/textures/items/"
+cp "$BUILD/generated-textures"/pistol.png "$BUILD/generated-textures"/shotgun.png \
+  "$BUILD/generated-textures"/rifle.png "$BUILD/generated-textures"/sniper.png \
+  "$BUILD/generated-textures"/light_ammo.png "$BUILD/generated-textures"/shell.png \
+  "$BUILD/generated-textures"/rifle_ammo.png "$BUILD/generated-textures"/sniper_ammo.png \
+  "$BUILD/bedrock-pack/textures/items/"
+mkdir -p "$BUILD/bedrock-pack/textures/entity/zombie"
+cp "$BUILD/generated-textures/zombie.png" "$BUILD/bedrock-pack/textures/entity/zombie/zombie.png"
 find "$BUILD/bedrock-pack" -type f -exec touch -t 202601010000 {} +
 (cd "$BUILD/bedrock-pack" && find . -type f -print | LC_ALL=C sort | zip -q "$DIST/NagelZombieBedrock.mcpack" -@)
 

@@ -1,5 +1,5 @@
 name: NagelZombieSurvival
-version: 0.1.0
+version: 0.2.0
 main: com.nagelworld.zombie.NagelZombieSurvivalPlugin
 api-version: '1.21'
 author: Nagel
@@ -18,6 +18,9 @@ commands:
   estacao:
     description: Mostra a estacao e a temperatura atual.
     usage: /estacao
+  recarregar:
+    description: Recarrega a arma que esta na mao.
+    usage: /recarregar
   sethome:
     description: Salva sua casa atual.
     usage: /sethome

@@ -44,7 +44,7 @@ services:
       ENABLE_WHITELIST: "${ZOMBIE_ENABLE_WHITELIST:-false}"
       WHITELIST: "${ZOMBIE_WHITELIST:-FelipeSNagel}"
       RESOURCE_PACK: "${ZOMBIE_RESOURCE_PACK_URL:-https://raw.githubusercontent.com/FelipeSNagel/nagel-world/main/zombie-survival/dist/NagelZombieJava.zip}"
-      RESOURCE_PACK_SHA1: "${ZOMBIE_RESOURCE_PACK_SHA1:-bd6c7d754575b98a5f15862d20a78a4959fc0c3c}"
+      RESOURCE_PACK_SHA1: "${ZOMBIE_RESOURCE_PACK_SHA1:-3fdef66a96f773c298dc975c7e48d283581c4f81}"
       RESOURCE_PACK_ENFORCED: "TRUE"
       RESOURCE_PACK_PROMPT: '{"text":"Este pacote adiciona os modelos das armas.","color":"gold"}'
       PLUGINS: |-

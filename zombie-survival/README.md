@@ -14,14 +14,16 @@ mundo nem os dados do Nagel Craftlandia.
 
 | Arma | Controle | Pente | Alcance |
 | --- | --- | ---: | ---: |
-| Pistola 9mm | usar/L2 | 12 | 38 blocos |
-| Escopeta | usar/L2 | 6 | 24 blocos |
-| Rifle de assalto | usar/L2 | 30 | 65 blocos |
-| Rifle de precisao | segurar L2 para mirar e R2 para atirar | 5 | 130 blocos |
+| Pistola 9mm | ataque/R2 | 12 | 38 blocos |
+| Escopeta | ataque/R2 | 6 | 24 blocos |
+| Rifle de assalto | ataque/R2 | 30 | 65 blocos |
+| Rifle de precisao | L2 para mirar e ataque/R2 para atirar | 5 | 130 blocos |
 
-A recarga e automatica quando o pente termina. Cada arma possui municao
-propria e todas as receitas aparecem no livro da bancada. Operadores podem usar
-`/kitarmas` para receber o arsenal de teste.
+Use o controle `Soltar item` para recarregar; a arma nao e jogada no chao. No
+Java, esse controle pode ser associado a tecla `R`. `/recarregar` faz a mesma
+coisa. A recarga tambem inicia automaticamente quando o pente termina. Cada
+arma possui municao propria e todas as receitas aparecem no livro da bancada.
+Operadores podem usar `/kitarmas` para receber o arsenal de teste.
 
 ## Sobrevivencia
 
@@ -30,7 +32,11 @@ propria e todas as receitas aparecem no livro da bancada. Operadores podem usar
 - `/sethome` e `/home`: casa pessoal, sem depender de plugins externos.
 - Temperatura considera estacao, bioma, clima, horario, altitude, agua e calor
   proximo.
-- Corredores, brutamontes e infectados aparecem entre zumbis normais.
+- Monstros naturais comuns sao substituidos por infectados; aranhas, creepers
+  e esqueletos nao ocupam o mapa.
+- Cambaleantes, errantes, cacadores, corredores, brutamontes e alfas possuem
+  velocidades, vida e percepcao diferentes.
+- Zumbis nao queimam durante o dia e emitem gemidos com tons diferentes.
 - Tiros atraem zumbis.
 - A cada dez dias surge uma horda durante a noite.
 - Zumbis perseguindo jogadores racham e quebram blocos. Baus, portais,
@@ -68,6 +74,5 @@ reconstruido, atualize `ZOMBIE_RESOURCE_PACK_SHA1` com o conteudo de
 
 ## Desenvolvimento
 
-`./build.sh` compila o plugin, gera as texturas e cria os dois pacotes em
-`dist/`. Os modelos atuais formam a prova de conceito; podem ser substituidos
-por modelos 3D mais detalhados sem alterar armas, crafting ou mundo.
+`./build.sh` compila o plugin, gera as texturas, os modelos 3D das armas e cria
+os dois pacotes em `dist/`.
