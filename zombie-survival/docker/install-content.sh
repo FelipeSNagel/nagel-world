@@ -7,6 +7,12 @@ rm -f \
   /data/plugins/Essentials*.jar \
   /data/plugins/LuckPerms-*.jar
 
+if [ -f /data/bukkit.yml ]; then
+  sed -i 's/^  connection-throttle:.*/  connection-throttle: 0/' /data/bukkit.yml
+else
+  printf 'settings:\n  connection-throttle: 0\n' > /data/bukkit.yml
+fi
+
 cp /content/NagelZombieSurvival.jar /data/plugins/NagelZombieSurvival.jar
 cp /content/NagelZombieBedrock.mcpack "$GEYSER_DIR/packs/NagelZombieBedrock.mcpack"
 cp /content/nagel-zombie-items.json "$GEYSER_DIR/custom_mappings/nagel-zombie-items.json"
