@@ -43,7 +43,7 @@ services:
       OPS: "${ZOMBIE_OPS:-FelipeSNagel}"
       ENABLE_WHITELIST: "${ZOMBIE_ENABLE_WHITELIST:-false}"
       WHITELIST: "${ZOMBIE_WHITELIST:-FelipeSNagel}"
-      RESOURCE_PACK: "${ZOMBIE_RESOURCE_PACK_URL:-https://raw.githubusercontent.com/FelipeSNagel/nagel-world/daae5ad64aaf208de67c932660f83f1ee9feeb59/zombie-survival/dist/NagelZombieJava.zip}"
+      RESOURCE_PACK: "${ZOMBIE_RESOURCE_PACK_URL:-https://raw.githubusercontent.com/FelipeSNagel/nagel-world/69545766cdc52ad8a94efdfa59991c042c7f251c/zombie-survival/dist/NagelZombieJava.zip}"
       RESOURCE_PACK_SHA1: "${ZOMBIE_RESOURCE_PACK_SHA1:-a1f3f2d57b1c20276e34c92a2a248e9060326799}"
       RESOURCE_PACK_ENFORCED: "TRUE"
       RESOURCE_PACK_PROMPT: '{"text":"Este pacote adiciona os modelos das armas.","color":"gold"}'
