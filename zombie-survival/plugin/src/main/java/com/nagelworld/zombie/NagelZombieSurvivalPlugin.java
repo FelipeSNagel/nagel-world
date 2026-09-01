@@ -14,6 +14,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Color;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -29,6 +30,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Drowned;
+import org.bukkit.entity.Husk;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
@@ -49,11 +52,13 @@ import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import io.papermc.paper.event.player.PlayerStopUsingItemEvent;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -110,6 +115,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private NamespacedKey ammoKey;
     private NamespacedKey magazineKey;
     private NamespacedKey zombieTypeKey;
+    private NamespacedKey zombieLookKey;
     private NamespacedKey homeWorldKey;
     private NamespacedKey homeXKey;
     private NamespacedKey homeYKey;
@@ -144,6 +150,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         ammoKey = new NamespacedKey(this, "ammo");
         magazineKey = new NamespacedKey(this, "magazine");
         zombieTypeKey = new NamespacedKey(this, "zombie_type");
+        zombieLookKey = new NamespacedKey(this, "zombie_look");
         homeWorldKey = new NamespacedKey(this, "home_world");
         homeXKey = new NamespacedKey(this, "home_x");
         homeYKey = new NamespacedKey(this, "home_y");
@@ -285,7 +292,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
                 event.setCancelled(true);
                 if (!isDaytime(location.getWorld())) {
                     getServer().getScheduler().runTask(this, () -> {
-                        if (location.isWorldLoaded()) location.getWorld().spawn(location, Zombie.class);
+                        if (location.isWorldLoaded()) spawnZombieVariant(location);
                     });
                 }
             }
@@ -300,7 +307,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             Location location = event.getLocation().clone();
             event.setCancelled(true);
             getServer().getScheduler().runTask(this, () -> {
-                if (location.isWorldLoaded()) location.getWorld().spawn(location, Zombie.class);
+                if (location.isWorldLoaded()) spawnZombieVariant(location);
             });
             return;
         }
@@ -742,7 +749,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
                 int x = player.getLocation().getBlockX() + (int) (Math.cos(angle) * distance);
                 int z = player.getLocation().getBlockZ() + (int) (Math.sin(angle) * distance);
                 int y = world.getHighestBlockYAt(x, z) + 1;
-                Zombie zombie = world.spawn(new Location(world, x + 0.5, y, z + 0.5), Zombie.class);
+                Zombie zombie = spawnZombieVariant(new Location(world, x + 0.5, y, z + 0.5));
                 zombie.setTarget(player);
             }
         }
@@ -757,9 +764,16 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             int x = player.getLocation().getBlockX() + (int) (Math.cos(angle) * distance);
             int z = player.getLocation().getBlockZ() + (int) (Math.sin(angle) * distance);
             int y = world.getHighestBlockYAt(x, z) + 1;
-            Zombie zombie = world.spawn(new Location(world, x + 0.5, y, z + 0.5), Zombie.class);
+            Zombie zombie = spawnZombieVariant(new Location(world, x + 0.5, y, z + 0.5));
             zombie.setTarget(player);
         }
+    }
+
+    private Zombie spawnZombieVariant(Location location) {
+        double roll = ThreadLocalRandom.current().nextDouble();
+        if (roll < 0.68) return location.getWorld().spawn(location, Zombie.class);
+        if (roll < 0.88) return location.getWorld().spawn(location, Husk.class);
+        return location.getWorld().spawn(location, Drowned.class);
     }
 
     private void configureZombie(Zombie zombie) {
@@ -776,6 +790,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             data.set(zombieTypeKey, PersistentDataType.STRING, type);
         }
         applyZombieProfile(zombie, type);
+        applyZombieLook(zombie, type);
         zombie.setCustomNameVisible(false);
         zombie.setCanBreakDoors(true);
         zombie.setShouldBurnInDay(false);
@@ -789,6 +804,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         setAttribute(zombie, Attribute.ATTACK_DAMAGE, 4.0);
         setAttribute(zombie, Attribute.KNOCKBACK_RESISTANCE, 0.0);
         setAttribute(zombie, Attribute.MAX_HEALTH, 20.0);
+        setAttribute(zombie, Attribute.SCALE, 1.0);
         zombie.setHealth(Math.min(zombie.getHealth(), 20.0));
         switch (type) {
             case "shambler" -> {
@@ -821,18 +837,80 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
                 zombie.setCustomName(ChatColor.DARK_RED + "Brutamontes");
             }
             case "infected" -> {
-                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.25, 0.30));
-                setAttribute(zombie, Attribute.MAX_HEALTH, 36.0);
-                setAttribute(zombie, Attribute.ATTACK_DAMAGE, 7.0);
+                setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.11, 0.15));
+                setAttribute(zombie, Attribute.MAX_HEALTH, 80.0);
+                setAttribute(zombie, Attribute.ATTACK_DAMAGE, 12.0);
                 setAttribute(zombie, Attribute.FOLLOW_RANGE, 64.0);
-                zombie.setHealth(Math.max(zombie.getHealth(), 36.0));
-                zombie.setCustomName(ChatColor.RED + "Infectado Alfa");
+                setAttribute(zombie, Attribute.KNOCKBACK_RESISTANCE, 0.72);
+                setAttribute(zombie, Attribute.SCALE, 1.45);
+                zombie.setHealth(Math.max(zombie.getHealth(), 80.0));
+                zombie.setCustomName(ChatColor.DARK_RED + "Berserker");
             }
             default -> {
                 setAttribute(zombie, Attribute.MOVEMENT_SPEED, random.nextDouble(0.17, 0.22));
                 zombie.setCustomName(ChatColor.GRAY + "Errante");
             }
         }
+    }
+
+    private void applyZombieLook(Zombie zombie, String type) {
+        PersistentDataContainer data = zombie.getPersistentDataContainer();
+        String look = data.get(zombieLookKey, PersistentDataType.STRING);
+        if (look == null) {
+            String[] looks = {"civilian", "worker", "medic", "soldier", "prisoner", "scavenger"};
+            look = looks[ThreadLocalRandom.current().nextInt(looks.length)];
+            data.set(zombieLookKey, PersistentDataType.STRING, look);
+        }
+        EntityEquipment equipment = zombie.getEquipment();
+        equipment.clear();
+        if ("infected".equals(type)) {
+            equipment.setChestplate(dyedArmor(Material.LEATHER_CHESTPLATE, Color.fromRGB(72, 20, 18)));
+            equipment.setLeggings(dyedArmor(Material.LEATHER_LEGGINGS, Color.fromRGB(35, 31, 29)));
+        } else {
+            switch (look) {
+                case "worker" -> {
+                    equipment.setHelmet(dyedArmor(Material.LEATHER_HELMET, Color.fromRGB(196, 113, 24)));
+                    equipment.setChestplate(dyedArmor(Material.LEATHER_CHESTPLATE, Color.fromRGB(184, 91, 23)));
+                    equipment.setLeggings(dyedArmor(Material.LEATHER_LEGGINGS, Color.fromRGB(48, 54, 57)));
+                }
+                case "medic" -> {
+                    equipment.setChestplate(dyedArmor(Material.LEATHER_CHESTPLATE, Color.fromRGB(190, 188, 177)));
+                    equipment.setLeggings(dyedArmor(Material.LEATHER_LEGGINGS, Color.fromRGB(69, 76, 79)));
+                    equipment.setBoots(dyedArmor(Material.LEATHER_BOOTS, Color.fromRGB(126, 31, 28)));
+                }
+                case "soldier" -> {
+                    equipment.setHelmet(dyedArmor(Material.LEATHER_HELMET, Color.fromRGB(55, 65, 43)));
+                    equipment.setChestplate(dyedArmor(Material.LEATHER_CHESTPLATE, Color.fromRGB(64, 74, 48)));
+                    equipment.setLeggings(dyedArmor(Material.LEATHER_LEGGINGS, Color.fromRGB(46, 51, 39)));
+                }
+                case "prisoner" -> {
+                    equipment.setChestplate(dyedArmor(Material.LEATHER_CHESTPLATE, Color.fromRGB(202, 94, 23)));
+                    equipment.setLeggings(dyedArmor(Material.LEATHER_LEGGINGS, Color.fromRGB(176, 75, 18)));
+                }
+                case "scavenger" -> {
+                    equipment.setChestplate(new ItemStack(Material.CHAINMAIL_CHESTPLATE));
+                    equipment.setLeggings(dyedArmor(Material.LEATHER_LEGGINGS, Color.fromRGB(73, 54, 40)));
+                }
+                default -> {
+                    equipment.setChestplate(dyedArmor(Material.LEATHER_CHESTPLATE, Color.fromRGB(51, 65, 75)));
+                    equipment.setLeggings(dyedArmor(Material.LEATHER_LEGGINGS, Color.fromRGB(53, 45, 40)));
+                }
+            }
+        }
+        equipment.setHelmetDropChance(0.0f);
+        equipment.setChestplateDropChance(0.0f);
+        equipment.setLeggingsDropChance(0.0f);
+        equipment.setBootsDropChance(0.0f);
+    }
+
+    private ItemStack dyedArmor(Material material, Color color) {
+        ItemStack item = new ItemStack(material);
+        LeatherArmorMeta meta = (LeatherArmorMeta) item.getItemMeta();
+        meta.setColor(color);
+        meta.setUnbreakable(true);
+        meta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ATTRIBUTES);
+        item.setItemMeta(meta);
+        return item;
     }
 
     private void tickZombieAtmosphere() {

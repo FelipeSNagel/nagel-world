@@ -36,7 +36,20 @@ public final class GenerateTextures {
         material(output.resolve("gun_wood.png"), WOOD, WOOD_LIGHT);
         material(output.resolve("gun_olive.png"), OLIVE, new Color(91, 105, 73));
         material(output.resolve("gun_scope.png"), new Color(25, 34, 36), new Color(59, 112, 124));
-        zombie(output.resolve("zombie.png"));
+        zombie(output.resolve("zombie.png"), 90210L,
+            new Color(151, 143, 133), new Color(107, 101, 96),
+            new Color(58, 70, 74), new Color(36, 43, 46),
+            new Color(54, 49, 45), new Color(35, 32, 30), new Color(230, 219, 176));
+        zombie(output.resolve("husk.png"), 20481L,
+            new Color(132, 112, 87), new Color(85, 70, 55),
+            new Color(78, 57, 42), new Color(49, 38, 31),
+            new Color(65, 52, 43), new Color(38, 32, 28), new Color(228, 194, 116));
+        zombie(output.resolve("drowned.png"), 77123L,
+            new Color(91, 119, 116), new Color(54, 79, 79),
+            new Color(43, 70, 73), new Color(28, 47, 51),
+            new Color(45, 58, 57), new Color(27, 36, 36), new Color(178, 222, 207));
+        BufferedImage drownedOuter = transparent();
+        finish(canvas(drownedOuter), drownedOuter, output.resolve("drowned_outer_layer.png"));
     }
 
     private static Graphics2D canvas(BufferedImage image) {
@@ -170,15 +183,11 @@ public final class GenerateTextures {
         finish(g, image, file);
     }
 
-    private static void zombie(Path file) throws IOException {
+    private static void zombie(Path file, long seed, Color skin, Color skinDark,
+                               Color shirt, Color shirtDark, Color pants, Color pantsDark,
+                               Color eye) throws IOException {
         BufferedImage image = transparent();
-        Random random = new Random(90210L);
-        Color skin = new Color(151, 143, 133);
-        Color skinDark = new Color(107, 101, 96);
-        Color shirt = new Color(58, 70, 74);
-        Color shirtDark = new Color(36, 43, 46);
-        Color pants = new Color(54, 49, 45);
-        Color pantsDark = new Color(35, 32, 30);
+        Random random = new Random(seed);
 
         skinPart(image, random, skin, skinDark, 8, 0, 8, 8);
         skinPart(image, random, skinDark, skin, 16, 0, 8, 8);
@@ -192,7 +201,7 @@ public final class GenerateTextures {
         bodyPart(image, random, pants, pantsDark, 16, 48, 16, 16);
 
         Graphics2D g = canvas(image);
-        rect(g, new Color(230, 219, 176), 9, 10, 2, 1);
+        rect(g, eye, 9, 10, 2, 1);
         rect(g, new Color(191, 55, 45), 13, 10, 2, 1);
         rect(g, new Color(78, 30, 28), 10, 14, 5, 1);
         rect(g, new Color(118, 30, 28), 24, 21, 4, 7);

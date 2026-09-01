@@ -45,6 +45,9 @@ cp "$BUILD/generated-textures"/pistol.png "$BUILD/generated-textures"/shotgun.pn
   "$BUILD/java-pack/assets/nagelzombie/textures/item/"
 mkdir -p "$BUILD/java-pack/assets/minecraft/textures/entity/zombie"
 cp "$BUILD/generated-textures/zombie.png" "$BUILD/java-pack/assets/minecraft/textures/entity/zombie/zombie.png"
+cp "$BUILD/generated-textures/husk.png" "$BUILD/java-pack/assets/minecraft/textures/entity/zombie/husk.png"
+cp "$BUILD/generated-textures/drowned.png" "$BUILD/java-pack/assets/minecraft/textures/entity/zombie/drowned.png"
+cp "$BUILD/generated-textures/drowned_outer_layer.png" "$BUILD/java-pack/assets/minecraft/textures/entity/zombie/drowned_outer_layer.png"
 
 for item in pistol shotgun rifle sniper light_ammo shell rifle_ammo sniper_ammo; do
   mkdir -p "$BUILD/java-pack/assets/nagelzombie/items" "$BUILD/java-pack/assets/nagelzombie/models/item"
@@ -68,6 +71,9 @@ cp "$BUILD/generated-textures"/pistol.png "$BUILD/generated-textures"/shotgun.pn
   "$BUILD/bedrock-pack/textures/items/"
 mkdir -p "$BUILD/bedrock-pack/textures/entity/zombie"
 cp "$BUILD/generated-textures/zombie.png" "$BUILD/bedrock-pack/textures/entity/zombie/zombie.png"
+cp "$BUILD/generated-textures/husk.png" "$BUILD/bedrock-pack/textures/entity/zombie/husk.png"
+cp "$BUILD/generated-textures/drowned.png" "$BUILD/bedrock-pack/textures/entity/zombie/drowned.png"
+cp "$BUILD/generated-textures/drowned_outer_layer.png" "$BUILD/bedrock-pack/textures/entity/zombie/drowned_outer_layer.png"
 find "$BUILD/bedrock-pack" -type f -exec touch -t 202601010000 {} +
 (cd "$BUILD/bedrock-pack" && find . -type f -print | LC_ALL=C sort | zip -q "$DIST/NagelZombieBedrock.mcpack" -@)
 

@@ -36,11 +36,14 @@ de teste.
   proximo.
 - Monstros naturais comuns sao substituidos por infectados; aranhas, creepers
   e esqueletos nao ocupam o mapa.
-- Cambaleantes, errantes, cacadores, corredores, brutamontes e alfas possuem
+- Cambaleantes, errantes, cacadores, corredores, brutamontes e Berserkers possuem
   velocidades, vida e percepcao diferentes.
 - 78% dos infectados sao lentos; cacadores, corredores, brutamontes e alfas
   formam os 22% restantes.
 - Zumbis nao queimam durante o dia e emitem gemidos com tons diferentes.
+- Tres corpos diferentes e seis conjuntos de roupa geram varias aparencias.
+- O Berserker possui escala 1,45x, 40 coracoes, velocidade baixa, ataque forte
+  e alta resistencia a recuo.
 - A pistola possui recuo leve, o rifle recuo medio, a sniper recuo forte e a
   escopeta empurra proporcionalmente ao numero de chumbos que acertam.
 - Tiros atraem zumbis.
