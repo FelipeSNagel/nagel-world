@@ -105,6 +105,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private record ShotHit(LivingEntity target, boolean headshot) {}
 
     private final Map<UUID, Long> lastShot = new HashMap<>();
+    private final Map<UUID, Long> automaticFireUntil = new HashMap<>();
     private final Set<UUID> reloading = new HashSet<>();
     private final Set<UUID> applyingWeaponDamage = new HashSet<>();
     private final Map<String, BlockProgress> blockDamage = new HashMap<>();
@@ -179,6 +180,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         registerRecipes();
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getScheduler().runTaskTimer(this, this::tickPlayers, 40L, 40L);
+        getServer().getScheduler().runTaskTimer(this, this::tickAutomaticWeapons, 2L, 2L);
         getServer().getScheduler().runTaskTimer(this, this::tickZombieBreaking, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, this::tickHordes, 200L, 200L);
         getServer().getScheduler().runTaskTimer(this, this::tickZombieAtmosphere, 80L, 80L);
@@ -204,7 +206,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         Player player = event.getPlayer();
         initializeNutrition(player);
         player.discoverRecipes(Arrays.asList(
-            key("pistol"), key("shotgun"), key("rifle"), key("sniper"),
+            key("pistol"), key("smg"), key("shotgun"), key("rifle"), key("sniper"),
             key("light_ammo"), key("shell"), key("rifle_ammo"), key("sniper_ammo")
         ));
         player.sendMessage(ChatColor.DARK_RED + "Apocalipse ativo. " + ChatColor.GRAY + "Use /armas, /nutricao e /estacao.");
@@ -223,7 +225,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         Action action = event.getAction();
         if (action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK) {
             event.setCancelled(true);
-            fire(event.getPlayer(), event.getItem(), weapon);
+            triggerFire(event.getPlayer(), event.getItem(), weapon);
         } else if (action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK) {
             if (weapon != WeaponType.SNIPER || event.getPlayer().isSneaking()) {
                 reload(event.getPlayer(), event.getItem(), weapon);
@@ -242,7 +244,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         ItemStack item = event.getPlayer().getInventory().getItemInMainHand();
         WeaponType weapon = weaponFrom(item);
         if (weapon != null) {
-            fire(event.getPlayer(), item, weapon);
+            triggerFire(event.getPlayer(), item, weapon);
         }
     }
 
@@ -260,7 +262,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             return;
         }
         event.setCancelled(true);
-        fire(player, item, weapon);
+        triggerFire(player, item, weapon);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -423,9 +425,9 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         setMagazine(item, magazine - 1, weapon);
         player.getInventory().setItemInMainHand(item);
         lastShot.put(player.getUniqueId(), now);
-        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE,
-            weapon == WeaponType.SNIPER ? 1.5f : 0.8f,
-            weapon == WeaponType.SHOTGUN ? 0.65f : 1.35f);
+        float shotVolume = weapon == WeaponType.SNIPER ? 1.5f : weapon == WeaponType.SMG ? 0.55f : 0.8f;
+        float shotPitch = weapon == WeaponType.SHOTGUN ? 0.65f : weapon == WeaponType.SMG ? 1.65f : 1.35f;
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, shotVolume, shotPitch);
         player.getWorld().spawnParticle(Particle.SMOKE, player.getEyeLocation().add(player.getLocation().getDirection().multiply(0.7)), 5, 0.04, 0.04, 0.04, 0.01);
 
         Map<LivingEntity, ShotImpact> impacts = new HashMap<>();
@@ -446,6 +448,25 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         if (remaining == 0) {
             getServer().getScheduler().runTaskLater(this, () -> reload(player, item, weapon), 4L);
         }
+    }
+
+    private void triggerFire(Player player, ItemStack item, WeaponType weapon) {
+        if (weapon == WeaponType.SMG) {
+            automaticFireUntil.put(player.getUniqueId(), System.currentTimeMillis() + 380L);
+        }
+        fire(player, item, weapon);
+    }
+
+    private void tickAutomaticWeapons() {
+        long now = System.currentTimeMillis();
+        automaticFireUntil.entrySet().removeIf(entry -> {
+            Player player = Bukkit.getPlayer(entry.getKey());
+            if (player == null || !player.isOnline() || entry.getValue() < now) return true;
+            ItemStack held = player.getInventory().getItemInMainHand();
+            if (weaponFrom(held) != WeaponType.SMG) return true;
+            fire(player, held, WeaponType.SMG);
+            return false;
+        });
     }
 
     private ShotHit traceShot(Player player, Vector direction, WeaponType weapon) {
@@ -1205,6 +1226,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private void showWeaponHelp(Player player) {
         player.sendMessage(ChatColor.DARK_RED + "--- Arsenal ---");
         player.sendMessage(ChatColor.GOLD + "Pistola: " + ChatColor.GRAY + "ferro, redstone e pederneira.");
+        player.sendMessage(ChatColor.GOLD + "Submetralhadora: " + ChatColor.GRAY + "ferro, cobre, redstone e pederneira.");
         player.sendMessage(ChatColor.GOLD + "Escopeta: " + ChatColor.GRAY + "ferro, madeira e redstone.");
         player.sendMessage(ChatColor.GOLD + "Rifle: " + ChatColor.GRAY + "ferro, cobre, redstone e diamante.");
         player.sendMessage(ChatColor.GOLD + "Sniper: " + ChatColor.GRAY + "luneta, ferro, redstone e diamante.");
@@ -1282,6 +1304,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
 
     private void registerRecipes() {
         registerWeaponRecipe("pistol", WeaponType.PISTOL, new String[] {" II", "RFI", " I "}, Map.of('I', Material.IRON_INGOT, 'R', Material.REDSTONE, 'F', Material.FLINT));
+        registerWeaponRecipe("smg", WeaponType.SMG, new String[] {"III", "RFC", " II"}, Map.of('I', Material.IRON_INGOT, 'R', Material.REDSTONE, 'F', Material.FLINT, 'C', Material.COPPER_INGOT));
         registerWeaponRecipe("shotgun", WeaponType.SHOTGUN, new String[] {"III", "RFW", " WW"}, Map.of('I', Material.IRON_INGOT, 'R', Material.REDSTONE, 'F', Material.FLINT, 'W', Material.OAK_PLANKS));
         registerWeaponRecipe("rifle", WeaponType.RIFLE, new String[] {"IID", "RCI", " II"}, Map.of('I', Material.IRON_INGOT, 'R', Material.REDSTONE, 'C', Material.COPPER_INGOT, 'D', Material.DIAMOND));
         registerWeaponRecipe("sniper", WeaponType.SNIPER, new String[] {"SID", "RII", "  I"}, Map.of('S', Material.SPYGLASS, 'I', Material.IRON_INGOT, 'R', Material.REDSTONE, 'D', Material.DIAMOND));

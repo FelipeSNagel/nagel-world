@@ -47,7 +47,7 @@ done
 
 cp -R "$PROJECT/resource-packs/java" "$BUILD/java-pack"
 mkdir -p "$BUILD/java-pack/assets/nagelzombie/textures/item"
-cp "$BUILD/generated-textures"/pistol.png "$BUILD/generated-textures"/shotgun.png \
+cp "$BUILD/generated-textures"/pistol.png "$BUILD/generated-textures"/smg.png "$BUILD/generated-textures"/shotgun.png \
   "$BUILD/generated-textures"/rifle.png "$BUILD/generated-textures"/sniper.png \
   "$BUILD/generated-textures"/light_ammo.png "$BUILD/generated-textures"/shell.png \
   "$BUILD/generated-textures"/rifle_ammo.png "$BUILD/generated-textures"/sniper_ammo.png \
@@ -63,12 +63,12 @@ cp "$BUILD/generated-textures/drowned_outer_layer.png" "$BUILD/java-pack/assets/
 mkdir -p "$BUILD/java-pack/assets/nagelzombie/sounds"
 cp "$BUILD/generated-sounds"/*.ogg "$BUILD/java-pack/assets/nagelzombie/sounds/"
 
-for item in pistol shotgun rifle sniper light_ammo shell rifle_ammo sniper_ammo; do
+for item in pistol smg shotgun rifle sniper light_ammo shell rifle_ammo sniper_ammo; do
   mkdir -p "$BUILD/java-pack/assets/nagelzombie/items" "$BUILD/java-pack/assets/nagelzombie/models/item"
   printf '{"model":{"type":"minecraft:model","model":"nagelzombie:item/%s"}}\n' "$item" \
     > "$BUILD/java-pack/assets/nagelzombie/items/$item.json"
   case "$item" in
-    pistol|shotgun|rifle|sniper) ;;
+    pistol|smg|shotgun|rifle|sniper) ;;
     *) printf '{"parent":"minecraft:item/generated","textures":{"layer0":"nagelzombie:item/%s"}}\n' "$item" \
       > "$BUILD/java-pack/assets/nagelzombie/models/item/$item.json" ;;
   esac
@@ -78,7 +78,7 @@ find "$BUILD/java-pack" -type f -exec touch -t 202601010000 {} +
 
 cp -R "$PROJECT/resource-packs/bedrock" "$BUILD/bedrock-pack"
 mkdir -p "$BUILD/bedrock-pack/textures/items"
-cp "$BUILD/generated-textures"/pistol.png "$BUILD/generated-textures"/shotgun.png \
+cp "$BUILD/generated-textures"/pistol.png "$BUILD/generated-textures"/smg.png "$BUILD/generated-textures"/shotgun.png \
   "$BUILD/generated-textures"/rifle.png "$BUILD/generated-textures"/sniper.png \
   "$BUILD/generated-textures"/light_ammo.png "$BUILD/generated-textures"/shell.png \
   "$BUILD/generated-textures"/rifle_ammo.png "$BUILD/generated-textures"/sniper_ammo.png \

@@ -15,6 +15,7 @@ mundo nem os dados do Nagel Craftlandia.
 | Arma | Controle | Dano base | Pente | Alcance |
 | --- | --- | ---: | ---: | ---: |
 | Pistola 9mm | ataque/R2 | 3 coracoes | 12 | 38 blocos |
+| Submetralhadora | segurar ataque/R2 | 2 coracoes | 60 | 44 blocos |
 | Escopeta | ataque/R2 | ate 12 coracoes | 6 | 24 blocos |
 | Rifle de assalto | ataque/R2 | 6 coracoes | 30 | 65 blocos |
 | Rifle de precisao | L2 para mirar e disparar ao sair da mira | 15 coracoes | 5 | 130 blocos |
@@ -25,9 +26,12 @@ sozinho ativa a mira. No Java, altere em Controles a tecla de `Soltar item` de
 `Q` para `R`: o servidor recebe a acao, mas nao consegue identificar uma tecla
 fisica arbitraria sem exigir um mod no cliente.
 `/recarregar` faz a mesma coisa. A recarga tambem inicia automaticamente quando
-o pente termina. Cada arma possui municao propria e todas as receitas aparecem
+o pente termina. Cada arma usa sua municao adequada e todas as receitas aparecem
 no livro da bancada. Operadores podem usar `/kitarmas` para receber o arsenal
 de teste.
+
+A submetralhadora usa a mesma municao 9 mm da pistola. Segure o ataque para
+manter a rajada automatica de 10 tiros por segundo.
 
 ## Sobrevivencia
 

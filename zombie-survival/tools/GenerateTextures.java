@@ -24,6 +24,7 @@ public final class GenerateTextures {
         Path output = Path.of(args[0]);
         Files.createDirectories(output);
         pistol(output.resolve("pistol.png"));
+        smg(output.resolve("smg.png"));
         shotgun(output.resolve("shotgun.png"));
         rifle(output.resolve("rifle.png"));
         sniper(output.resolve("sniper.png"));
@@ -92,6 +93,29 @@ public final class GenerateTextures {
         rect(g, OUTLINE, 36, 37, 8, 15);
         rect(g, WOOD, 38, 39, 4, 11);
         rect(g, new Color(161, 42, 30), 56, 24, 4, 7);
+        finish(g, image, file);
+    }
+
+    private static void smg(Path file) throws IOException {
+        BufferedImage image = transparent();
+        Graphics2D g = canvas(image);
+        rect(g, OUTLINE, 4, 20, 56, 15);
+        rect(g, DARK_METAL, 7, 23, 50, 8);
+        rect(g, METAL, 21, 21, 23, 12);
+        rect(g, HIGHLIGHT, 23, 23, 18, 2);
+        rect(g, OUTLINE, 7, 15, 22, 7);
+        rect(g, DARK_METAL, 9, 17, 18, 3);
+        Polygon stock = new Polygon(new int[] {5, 22, 22, 9}, new int[] {29, 29, 39, 43}, 4);
+        g.setColor(OUTLINE); g.fillPolygon(stock);
+        Polygon stockInner = new Polygon(new int[] {8, 20, 20, 11}, new int[] {31, 31, 36, 40}, 4);
+        g.setColor(new Color(49, 55, 56)); g.fillPolygon(stockInner);
+        Polygon magazine = new Polygon(new int[] {31, 40, 38, 30}, new int[] {32, 32, 55, 52}, 4);
+        g.setColor(OUTLINE); g.fillPolygon(magazine);
+        Polygon magazineInner = new Polygon(new int[] {33, 38, 36, 32}, new int[] {35, 35, 51, 49}, 4);
+        g.setColor(DARK_METAL); g.fillPolygon(magazineInner);
+        rect(g, OUTLINE, 45, 31, 8, 13);
+        rect(g, METAL, 47, 33, 4, 9);
+        rect(g, new Color(188, 49, 34), 57, 24, 3, 6);
         finish(g, image, file);
     }
 

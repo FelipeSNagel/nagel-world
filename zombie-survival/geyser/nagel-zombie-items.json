@@ -11,6 +11,13 @@
       },
       {
         "type": "definition",
+        "model": "nagelzombie:smg",
+        "bedrock_identifier": "nagelzombie:smg",
+        "display_name": "Submetralhadora",
+        "bedrock_options": {"icon": "nagelzombie:smg", "display_handheld": true, "creative_category": "equipment"}
+      },
+      {
+        "type": "definition",
         "model": "nagelzombie:shotgun",
         "bedrock_identifier": "nagelzombie:shotgun",
         "display_name": "Escopeta",
@@ -41,4 +48,3 @@
     ]
   }
 }
-

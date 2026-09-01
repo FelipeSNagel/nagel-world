@@ -1,0 +1,12 @@
+{
+  "parent": "nagelzombie:item/_gun_display",
+  "textures": {"dark": "nagelzombie:item/gun_dark", "metal": "nagelzombie:item/gun_metal", "olive": "nagelzombie:item/gun_olive"},
+  "elements": [
+    {"from": [1, 8, 7], "to": [16, 10, 9], "faces": {"north":{"texture":"#dark"},"south":{"texture":"#dark"},"east":{"texture":"#metal"},"west":{"texture":"#metal"},"up":{"texture":"#metal"},"down":{"texture":"#dark"}}},
+    {"from": [6, 6.5, 6], "to": [12, 10.5, 10], "faces": {"north":{"texture":"#metal"},"south":{"texture":"#metal"},"east":{"texture":"#dark"},"west":{"texture":"#dark"},"up":{"texture":"#metal"},"down":{"texture":"#dark"}}},
+    {"from": [8, 1.5, 6.5], "to": [11, 7, 9.5], "rotation":{"origin":[9,7,8],"axis":"z","angle":22.5}, "faces": {"north":{"texture":"#dark"},"south":{"texture":"#dark"},"east":{"texture":"#metal"},"west":{"texture":"#metal"},"up":{"texture":"#dark"},"down":{"texture":"#dark"}}},
+    {"from": [11, 3.5, 6.8], "to": [13.5, 7.5, 9.2], "rotation":{"origin":[12,7,8],"axis":"z","angle":-22.5}, "faces": {"north":{"texture":"#dark"},"south":{"texture":"#dark"},"east":{"texture":"#metal"},"west":{"texture":"#metal"},"up":{"texture":"#dark"},"down":{"texture":"#dark"}}},
+    {"from": [1, 5.5, 6.5], "to": [7, 8.5, 9.5], "rotation":{"origin":[6,8,8],"axis":"z","angle":22.5}, "faces": {"north":{"texture":"#olive"},"south":{"texture":"#olive"},"east":{"texture":"#dark"},"west":{"texture":"#dark"},"up":{"texture":"#olive"},"down":{"texture":"#dark"}}},
+    {"from": [7, 11, 6.8], "to": [11, 12, 9.2], "faces": {"north":{"texture":"#dark"},"south":{"texture":"#dark"},"east":{"texture":"#metal"},"west":{"texture":"#metal"},"up":{"texture":"#metal"},"down":{"texture":"#dark"}}}
+  ]
+}

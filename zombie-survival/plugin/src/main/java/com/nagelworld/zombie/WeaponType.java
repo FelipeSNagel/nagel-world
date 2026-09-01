@@ -4,6 +4,7 @@ import org.bukkit.Material;
 
 enum WeaponType {
     PISTOL("pistol", "Pistola 9mm", Material.CARROT_ON_A_STICK, "light_ammo", 12, 6.0, 38.0, 260, 1500, 1, 0.0, 0.18),
+    SMG("smg", "Submetralhadora", Material.CARROT_ON_A_STICK, "light_ammo", 60, 4.0, 44.0, 100, 2600, 1, 0.025, 0.12),
     SHOTGUN("shotgun", "Escopeta", Material.CARROT_ON_A_STICK, "shell", 6, 3.0, 24.0, 850, 2400, 8, 0.10, 1.35),
     RIFLE("rifle", "Rifle de Assalto", Material.CARROT_ON_A_STICK, "rifle_ammo", 30, 12.0, 65.0, 125, 2100, 1, 0.012, 0.32),
     SNIPER("sniper", "Rifle de Precisao", Material.SPYGLASS, "sniper_ammo", 5, 30.0, 130.0, 1300, 3000, 1, 0.0, 0.72);
