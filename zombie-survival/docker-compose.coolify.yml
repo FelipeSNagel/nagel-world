@@ -1,0 +1,55 @@
+services:
+  zombie-content:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.content
+    restart: "no"
+    volumes:
+      - /data/minecraft-nagel/zombie-data:/data
+
+  zombie-server:
+    image: itzg/minecraft-server:java25
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    depends_on:
+      zombie-content:
+        condition: service_completed_successfully
+    ports:
+      - "25566:25565/tcp"
+      - "19133:19132/udp"
+    environment:
+      EULA: "TRUE"
+      TYPE: "PAPER"
+      VERSION: "${ZOMBIE_VERSION:-26.2}"
+      FORCE_REDOWNLOAD: "true"
+      MEMORY: "${ZOMBIE_MEMORY:-3G}"
+      SERVER_NAME: "${ZOMBIE_SERVER_NAME:-Nagel Zombie Survival}"
+      MOTD: "${ZOMBIE_MOTD:-Sobreviva ao apocalipse}"
+      LEVEL: "${ZOMBIE_LEVEL_NAME:-NagelZombieWorld}"
+      MODE: "survival"
+      DIFFICULTY: "hard"
+      HARDCORE: "false"
+      MAX_PLAYERS: "${ZOMBIE_MAX_PLAYERS:-10}"
+      ONLINE_MODE: "TRUE"
+      ENFORCE_SECURE_PROFILE: "FALSE"
+      ALLOW_FLIGHT: "TRUE"
+      SPAWN_PROTECTION: "0"
+      VIEW_DISTANCE: "${ZOMBIE_VIEW_DISTANCE:-10}"
+      SIMULATION_DISTANCE: "${ZOMBIE_SIMULATION_DISTANCE:-6}"
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: "${ZOMBIE_RCON_PASSWORD:-troque-essa-senha}"
+      OPS: "${ZOMBIE_OPS:-FelipeSNagel}"
+      ENABLE_WHITELIST: "${ZOMBIE_ENABLE_WHITELIST:-false}"
+      WHITELIST: "${ZOMBIE_WHITELIST:-FelipeSNagel}"
+      RESOURCE_PACK: "${ZOMBIE_RESOURCE_PACK_URL:-https://raw.githubusercontent.com/FelipeSNagel/nagel-world/main/zombie-survival/dist/NagelZombieJava.zip}"
+      RESOURCE_PACK_SHA1: "${ZOMBIE_RESOURCE_PACK_SHA1:-bd6c7d754575b98a5f15862d20a78a4959fc0c3c}"
+      RESOURCE_PACK_ENFORCED: "TRUE"
+      RESOURCE_PACK_PROMPT: '{"text":"Este pacote adiciona os modelos das armas.","color":"gold"}'
+      PLUGINS: |-
+        https://github.com/ViaVersion/ViaVersion/releases/download/5.11.0/ViaVersion-5.11.0.jar
+        https://github.com/ViaVersion/ViaBackwards/releases/download/5.11.0/ViaBackwards-5.11.0.jar
+        https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
+        https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
+    volumes:
+      - /data/minecraft-nagel/zombie-data:/data

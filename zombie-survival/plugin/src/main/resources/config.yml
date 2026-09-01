@@ -1,0 +1,7 @@
+season-length-days: 28
+horde-interval-days: 10
+horde-size-per-player: 8
+zombies-break-blocks: true
+zombies-spawn-in-daylight: true
+friendly-fire: false
+protected-spawn-radius: 12

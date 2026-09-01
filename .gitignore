@@ -7,3 +7,5 @@ craftlandia-data.before-restore-*/
 .DS_Store
 plugin-src/**/build/
 plugin-src/**/lib/
+zombie-survival/build/
+zombie-survival/.env

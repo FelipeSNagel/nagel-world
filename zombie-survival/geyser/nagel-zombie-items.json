@@ -1,0 +1,44 @@
+{
+  "format_version": 2,
+  "items": {
+    "minecraft:carrot_on_a_stick": [
+      {
+        "type": "definition",
+        "model": "nagelzombie:pistol",
+        "bedrock_identifier": "nagelzombie:pistol",
+        "display_name": "Pistola 9mm",
+        "bedrock_options": {"icon": "nagelzombie:pistol", "display_handheld": true, "creative_category": "equipment"}
+      },
+      {
+        "type": "definition",
+        "model": "nagelzombie:shotgun",
+        "bedrock_identifier": "nagelzombie:shotgun",
+        "display_name": "Escopeta",
+        "bedrock_options": {"icon": "nagelzombie:shotgun", "display_handheld": true, "creative_category": "equipment"}
+      },
+      {
+        "type": "definition",
+        "model": "nagelzombie:rifle",
+        "bedrock_identifier": "nagelzombie:rifle",
+        "display_name": "Rifle de Assalto",
+        "bedrock_options": {"icon": "nagelzombie:rifle", "display_handheld": true, "creative_category": "equipment"}
+      }
+    ],
+    "minecraft:spyglass": [
+      {
+        "type": "definition",
+        "model": "nagelzombie:sniper",
+        "bedrock_identifier": "nagelzombie:sniper",
+        "display_name": "Rifle de Precisao",
+        "bedrock_options": {"icon": "nagelzombie:sniper", "display_handheld": true, "creative_category": "equipment"}
+      }
+    ],
+    "minecraft:iron_nugget": [
+      {"type": "definition", "model": "nagelzombie:light_ammo", "bedrock_identifier": "nagelzombie:light_ammo", "display_name": "Municao 9mm", "bedrock_options": {"icon": "nagelzombie:light_ammo", "creative_category": "items"}},
+      {"type": "definition", "model": "nagelzombie:shell", "bedrock_identifier": "nagelzombie:shell", "display_name": "Cartucho calibre 12", "bedrock_options": {"icon": "nagelzombie:shell", "creative_category": "items"}},
+      {"type": "definition", "model": "nagelzombie:rifle_ammo", "bedrock_identifier": "nagelzombie:rifle_ammo", "display_name": "Municao de rifle", "bedrock_options": {"icon": "nagelzombie:rifle_ammo", "creative_category": "items"}},
+      {"type": "definition", "model": "nagelzombie:sniper_ammo", "bedrock_identifier": "nagelzombie:sniper_ammo", "display_name": "Municao de precisao", "bedrock_options": {"icon": "nagelzombie:sniper_ammo", "creative_category": "items"}}
+    ]
+  }
+}
+

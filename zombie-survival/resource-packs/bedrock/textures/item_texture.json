@@ -1,0 +1,15 @@
+{
+  "resource_pack_name": "nagel_zombie_survival",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "nagelzombie:pistol": {"textures": "textures/items/pistol"},
+    "nagelzombie:shotgun": {"textures": "textures/items/shotgun"},
+    "nagelzombie:rifle": {"textures": "textures/items/rifle"},
+    "nagelzombie:sniper": {"textures": "textures/items/sniper"},
+    "nagelzombie:light_ammo": {"textures": "textures/items/light_ammo"},
+    "nagelzombie:shell": {"textures": "textures/items/shell"},
+    "nagelzombie:rifle_ammo": {"textures": "textures/items/rifle_ammo"},
+    "nagelzombie:sniper_ammo": {"textures": "textures/items/sniper_ammo"}
+  }
+}
+

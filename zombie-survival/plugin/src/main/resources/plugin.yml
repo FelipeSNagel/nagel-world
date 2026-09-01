@@ -1,0 +1,30 @@
+name: NagelZombieSurvival
+version: 0.1.0
+main: com.nagelworld.zombie.NagelZombieSurvivalPlugin
+api-version: '1.21'
+author: Nagel
+description: Armas e sobrevivencia zumbi compativeis com Java e Bedrock.
+commands:
+  armas:
+    description: Mostra as receitas das armas.
+    usage: /armas
+  kitarmas:
+    description: Entrega o kit de teste das armas.
+    usage: /kitarmas
+    permission: nagelzombie.admin
+  nutricao:
+    description: Mostra os niveis de nutricao e hidratacao.
+    usage: /nutricao
+  estacao:
+    description: Mostra a estacao e a temperatura atual.
+    usage: /estacao
+  sethome:
+    description: Salva sua casa atual.
+    usage: /sethome
+  home:
+    description: Teleporta para sua casa salva.
+    usage: /home
+permissions:
+  nagelzombie.admin:
+    description: Permite administrar e testar o servidor zumbi.
+    default: op

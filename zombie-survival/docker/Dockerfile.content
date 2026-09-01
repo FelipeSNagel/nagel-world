@@ -1,0 +1,11 @@
+FROM alpine:3.22
+
+COPY dist/NagelZombieSurvival.jar /content/NagelZombieSurvival.jar
+COPY dist/NagelZombieBedrock.mcpack /content/NagelZombieBedrock.mcpack
+COPY geyser/nagel-zombie-items.json /content/nagel-zombie-items.json
+COPY geyser/config.yml /content/geyser-config.yml
+COPY docker/install-content.sh /usr/local/bin/install-content
+
+RUN chmod +x /usr/local/bin/install-content
+ENTRYPOINT ["/usr/local/bin/install-content"]
+

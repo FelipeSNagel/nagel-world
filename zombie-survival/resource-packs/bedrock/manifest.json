@@ -1,0 +1,18 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Nagel Zombie Survival",
+    "description": "Armas para o servidor Nagel Zombie Survival",
+    "uuid": "b60ee6ee-f180-4fc3-bab6-79399235118c",
+    "version": [0, 1, 0],
+    "min_engine_version": [1, 21, 0]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "c6a30bd5-63da-4c52-a949-119982b24e1e",
+      "version": [0, 1, 0]
+    }
+  ]
+}
+
