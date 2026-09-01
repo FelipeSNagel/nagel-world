@@ -38,9 +38,11 @@ if ! command -v oggenc >/dev/null 2>&1; then
   echo "oggenc nao encontrado; instale vorbis-tools para gerar os sons OGG." >&2
   exit 1
 fi
+serial=12001
 for wav in "$BUILD/generated-sounds-wav"/*.wav; do
   name="$(basename "$wav" .wav)"
-  oggenc -Q -q 5 -o "$BUILD/generated-sounds/$name.ogg" "$wav"
+  oggenc -Q -q 5 -s "$serial" -o "$BUILD/generated-sounds/$name.ogg" "$wav"
+  serial=$((serial + 1))
 done
 
 cp -R "$PROJECT/resource-packs/java" "$BUILD/java-pack"
