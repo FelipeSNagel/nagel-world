@@ -21,7 +21,9 @@ mundo nem os dados do Nagel Craftlandia.
 
 Use o botao secundario ou o controle `Soltar item` para recarregar; a arma nao
 e jogada no chao. Na sniper, use `agachar + botao secundario`, pois o secundario
-sozinho ativa a mira. No Java, `Soltar item` pode ser associado a tecla `R`.
+sozinho ativa a mira. No Java, altere em Controles a tecla de `Soltar item` de
+`Q` para `R`: o servidor recebe a acao, mas nao consegue identificar uma tecla
+fisica arbitraria sem exigir um mod no cliente.
 `/recarregar` faz a mesma coisa. A recarga tambem inicia automaticamente quando
 o pente termina. Cada arma possui municao propria e todas as receitas aparecem
 no livro da bancada. Operadores podem usar `/kitarmas` para receber o arsenal
@@ -51,8 +53,12 @@ de teste.
   escopeta empurra proporcionalmente ao numero de chumbos que acertam.
 - Tiros atraem zumbis.
 - A cada dez dias surge uma horda durante a noite.
-- Zumbis perseguindo jogadores racham e quebram blocos. Baus, portais,
-  obsidiana, bedrock e os 12 blocos ao redor do spawn sao protegidos.
+- Cerca de 16% dos zumbis racham e quebram blocos; tipos fortes possuem maior
+  chance e todo Berserker e quebrador. Baus, portais, obsidiana, bedrock e os
+  12 blocos ao redor do spawn sao protegidos.
+- Cerca de 12% dos zumbis constroem degraus de pedra quando o alvo esta acima.
+  Os degraus desaparecem automaticamente depois de 90 segundos; Berserkers
+  tambem possuem essa habilidade.
 
 ## Rodar localmente
 

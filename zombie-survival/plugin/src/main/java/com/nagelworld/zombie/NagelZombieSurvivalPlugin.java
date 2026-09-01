@@ -26,6 +26,7 @@ import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
@@ -110,6 +111,8 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private final Map<UUID, Double> lastTemperature = new HashMap<>();
     private final Map<UUID, Long> lastHordeDay = new HashMap<>();
     private final Map<UUID, Long> lastBerserkerRoar = new HashMap<>();
+    private final Map<UUID, Long> lastZombieBuild = new HashMap<>();
+    private final Map<String, Block> temporaryZombieBlocks = new HashMap<>();
     private final Map<Material, double[]> foodValues = new EnumMap<>(Material.class);
 
     private NamespacedKey weaponKey;
@@ -117,6 +120,8 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private NamespacedKey magazineKey;
     private NamespacedKey zombieTypeKey;
     private NamespacedKey zombieLookKey;
+    private NamespacedKey zombieBreakerKey;
+    private NamespacedKey zombieBuilderKey;
     private NamespacedKey homeWorldKey;
     private NamespacedKey homeXKey;
     private NamespacedKey homeYKey;
@@ -128,11 +133,14 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private int hordeInterval;
     private int hordeSize;
     private boolean zombiesBreakBlocks;
+    private boolean zombiesBuildStairs;
     private boolean zombiesSpawnInDaylight;
     private boolean friendlyFire;
     private int protectedSpawnRadius;
     private double daylightSpawnChance;
     private int daylightZombieCap;
+    private double zombieBreakerChance;
+    private double zombieBuilderChance;
 
     @Override
     public void onEnable() {
@@ -141,17 +149,22 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         hordeInterval = Math.max(1, getConfig().getInt("horde-interval-days", 10));
         hordeSize = Math.max(1, getConfig().getInt("horde-size-per-player", 8));
         zombiesBreakBlocks = getConfig().getBoolean("zombies-break-blocks", true);
+        zombiesBuildStairs = getConfig().getBoolean("zombies-build-stairs", true);
         zombiesSpawnInDaylight = getConfig().getBoolean("zombies-spawn-in-daylight", true);
         friendlyFire = getConfig().getBoolean("friendly-fire", false);
         protectedSpawnRadius = Math.max(0, getConfig().getInt("protected-spawn-radius", 12));
         daylightSpawnChance = Math.max(0.0, Math.min(1.0, getConfig().getDouble("daylight-spawn-chance", 0.12)));
         daylightZombieCap = Math.max(0, getConfig().getInt("daylight-zombie-cap", 3));
+        zombieBreakerChance = clampedChance("zombie-breaker-chance", 0.16);
+        zombieBuilderChance = clampedChance("zombie-builder-chance", 0.12);
 
         weaponKey = new NamespacedKey(this, "weapon");
         ammoKey = new NamespacedKey(this, "ammo");
         magazineKey = new NamespacedKey(this, "magazine");
         zombieTypeKey = new NamespacedKey(this, "zombie_type");
         zombieLookKey = new NamespacedKey(this, "zombie_look");
+        zombieBreakerKey = new NamespacedKey(this, "zombie_breaker");
+        zombieBuilderKey = new NamespacedKey(this, "zombie_builder");
         homeWorldKey = new NamespacedKey(this, "home_world");
         homeXKey = new NamespacedKey(this, "home_x");
         homeYKey = new NamespacedKey(this, "home_y");
@@ -176,6 +189,14 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             world.getEntitiesByClass(Zombie.class).forEach(this::configureZombie);
         }
         getLogger().info("Nagel Zombie Survival carregado: armas, nutricao, estacoes e hordas ativas.");
+    }
+
+    @Override
+    public void onDisable() {
+        temporaryZombieBlocks.values().forEach(block -> {
+            if (block.getType() == Material.COBBLESTONE) block.setType(Material.AIR, false);
+        });
+        temporaryZombieBlocks.clear();
     }
 
     @EventHandler
@@ -341,6 +362,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             return;
         }
         lastBerserkerRoar.remove(zombie.getUniqueId());
+        lastZombieBuild.remove(zombie.getUniqueId());
         String type = zombie.getPersistentDataContainer().get(zombieTypeKey, PersistentDataType.STRING);
         double chance = "brute".equals(type) ? 0.35 : 0.10;
         if (ThreadLocalRandom.current().nextDouble() < chance) {
@@ -637,14 +659,21 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     }
 
     private void tickZombieBreaking() {
-        if (!zombiesBreakBlocks) {
+        if (!zombiesBreakBlocks && !zombiesBuildStairs) {
             return;
         }
         long now = System.currentTimeMillis();
         blockDamage.entrySet().removeIf(entry -> now - entry.getValue().lastHit > 8000L);
         for (World world : Bukkit.getWorlds()) {
             for (Zombie zombie : world.getEntitiesByClass(Zombie.class)) {
-                if (!(zombie.getTarget() instanceof Player target) || zombie.getLocation().distanceSquared(target.getLocation()) > 16.0) {
+                if (!(zombie.getTarget() instanceof Player target)) {
+                    continue;
+                }
+                double distanceSquared = zombie.getLocation().distanceSquared(target.getLocation());
+                if (zombiesBuildStairs && distanceSquared <= 100.0 && hasZombieAbility(zombie, zombieBuilderKey)) {
+                    tryBuildZombieStep(zombie, target, now);
+                }
+                if (!zombiesBreakBlocks || distanceSquared > 16.0 || !hasZombieAbility(zombie, zombieBreakerKey)) {
                     continue;
                 }
                 Block block = obstruction(zombie, target);
@@ -655,7 +684,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
                 String key = world.getUID() + ":" + block.getX() + ":" + block.getY() + ":" + block.getZ();
                 BlockProgress progress = blockDamage.computeIfAbsent(key, ignored -> new BlockProgress());
                 String type = zombie.getPersistentDataContainer().get(zombieTypeKey, PersistentDataType.STRING);
-                progress.damage += "brute".equals(type) ? 2.5 : 1.0;
+                progress.damage += "infected".equals(type) ? 3.25 : "brute".equals(type) ? 2.5 : 1.0;
                 progress.lastHit = now;
                 float ratio = (float) Math.min(1.0, progress.damage / resistance);
                 for (Player player : world.getPlayers()) {
@@ -673,6 +702,43 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         }
     }
 
+    private void tryBuildZombieStep(Zombie zombie, Player target, long now) {
+        UUID id = zombie.getUniqueId();
+        if (target.getLocation().getY() - zombie.getLocation().getY() < 1.75
+            || now - lastZombieBuild.getOrDefault(id, 0L) < 1800L) {
+            return;
+        }
+        Vector direction = target.getLocation().toVector().subtract(zombie.getLocation().toVector()).setY(0);
+        if (direction.lengthSquared() < 0.04) return;
+        direction.normalize();
+
+        Block step = zombie.getLocation().clone().add(direction.multiply(1.15)).getBlock();
+        Block support = step.getRelative(BlockFace.DOWN);
+        Block headroom = step.getRelative(BlockFace.UP);
+        if (!step.isPassable() || step.isLiquid() || !headroom.isPassable() || !support.getType().isSolid()
+            || isProtectedSpawn(step)) {
+            return;
+        }
+        for (Player player : step.getWorld().getPlayers()) {
+            if (player.getLocation().getBlock().equals(step)
+                || player.getEyeLocation().getBlock().equals(step)) return;
+        }
+
+        step.setType(Material.COBBLESTONE, false);
+        lastZombieBuild.put(id, now);
+        String key = blockKey(step);
+        temporaryZombieBlocks.put(key, step);
+        step.getWorld().playSound(step.getLocation(), Sound.BLOCK_STONE_PLACE, 0.65f, 0.72f);
+        step.getWorld().spawnParticle(Particle.BLOCK, step.getLocation().add(0.5, 0.75, 0.5),
+            8, 0.2, 0.15, 0.2, step.getBlockData());
+        getServer().getScheduler().runTaskLater(this, () -> {
+            Block temporaryBlock = temporaryZombieBlocks.remove(key);
+            if (temporaryBlock != null && temporaryBlock.getType() == Material.COBBLESTONE) {
+                temporaryBlock.setType(Material.AIR, false);
+            }
+        }, 20L * 90L);
+    }
+
     private Block obstruction(Zombie zombie, Player target) {
         Location eye = zombie.getEyeLocation();
         Vector direction = target.getEyeLocation().toVector().subtract(eye.toVector()).normalize();
@@ -688,11 +754,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private boolean canZombieBreak(Block block) {
         Material material = block.getType();
         String name = material.name();
-        Location spawn = block.getWorld().getSpawnLocation();
-        boolean protectedSpawn = protectedSpawnRadius > 0
-            && Math.abs(block.getX() - spawn.getBlockX()) <= protectedSpawnRadius
-            && Math.abs(block.getZ() - spawn.getBlockZ()) <= protectedSpawnRadius;
-        return !protectedSpawn
+        return !isProtectedSpawn(block)
             && material != Material.BEDROCK
             && material != Material.OBSIDIAN
             && material != Material.CRYING_OBSIDIAN
@@ -703,6 +765,17 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             && !name.contains("COMMAND_BLOCK")
             && !name.contains("PORTAL")
             && material.getHardness() >= 0;
+    }
+
+    private boolean isProtectedSpawn(Block block) {
+        Location spawn = block.getWorld().getSpawnLocation();
+        return protectedSpawnRadius > 0
+            && Math.abs(block.getX() - spawn.getBlockX()) <= protectedSpawnRadius
+            && Math.abs(block.getZ() - spawn.getBlockZ()) <= protectedSpawnRadius;
+    }
+
+    private String blockKey(Block block) {
+        return block.getWorld().getUID() + ":" + block.getX() + ":" + block.getY() + ":" + block.getZ();
     }
 
     private double blockResistance(Material material) {
@@ -795,6 +868,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
                 : "infected";
             data.set(zombieTypeKey, PersistentDataType.STRING, type);
         }
+        assignZombieAbilities(zombie, type);
         applyZombieProfile(zombie, type);
         applyZombieLook(zombie, type);
         zombie.setCustomNameVisible(false);
@@ -802,6 +876,38 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         zombie.setShouldBurnInDay(false);
         zombie.setFireTicks(0);
         zombie.setRemoveWhenFarAway(true);
+    }
+
+    private void assignZombieAbilities(Zombie zombie, String type) {
+        PersistentDataContainer data = zombie.getPersistentDataContainer();
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        if (!data.has(zombieBreakerKey, PersistentDataType.BYTE)) {
+            double chance = switch (type) {
+                case "infected" -> 1.0;
+                case "brute" -> Math.max(0.65, zombieBreakerChance);
+                case "stalker" -> Math.min(1.0, zombieBreakerChance * 1.5);
+                default -> zombieBreakerChance;
+            };
+            data.set(zombieBreakerKey, PersistentDataType.BYTE, (byte) (random.nextDouble() < chance ? 1 : 0));
+        }
+        if (!data.has(zombieBuilderKey, PersistentDataType.BYTE)) {
+            double chance = switch (type) {
+                case "infected" -> 1.0;
+                case "brute" -> Math.max(0.30, zombieBuilderChance);
+                case "stalker", "runner" -> Math.min(1.0, zombieBuilderChance * 1.5);
+                default -> zombieBuilderChance;
+            };
+            data.set(zombieBuilderKey, PersistentDataType.BYTE, (byte) (random.nextDouble() < chance ? 1 : 0));
+        }
+    }
+
+    private boolean hasZombieAbility(Zombie zombie, NamespacedKey key) {
+        return Byte.valueOf((byte) 1).equals(
+            zombie.getPersistentDataContainer().get(key, PersistentDataType.BYTE));
+    }
+
+    private double clampedChance(String path, double fallback) {
+        return Math.max(0.0, Math.min(1.0, getConfig().getDouble(path, fallback)));
     }
 
     private void applyZombieProfile(Zombie zombie, String type) {
@@ -989,7 +1095,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             ChatColor.GRAY + "Municao: " + ammoName(weapon.ammoId),
             ChatColor.GRAY + "Pente: " + weapon.magazineSize,
             ChatColor.DARK_GRAY + "Ataque: disparar",
-            ChatColor.DARK_GRAY + "Secundario ou soltar item: recarregar"
+            ChatColor.DARK_GRAY + "R: recarregar (associe a Soltar item)"
         ));
         meta.getPersistentDataContainer().set(weaponKey, PersistentDataType.STRING, weapon.id);
         meta.getPersistentDataContainer().set(magazineKey, PersistentDataType.INTEGER, 0);

@@ -2,6 +2,9 @@ season-length-days: 28
 horde-interval-days: 10
 horde-size-per-player: 8
 zombies-break-blocks: true
+zombies-build-stairs: true
+zombie-breaker-chance: 0.16
+zombie-builder-chance: 0.12
 zombies-spawn-in-daylight: true
 daylight-spawn-chance: 0.12
 daylight-zombie-cap: 3
