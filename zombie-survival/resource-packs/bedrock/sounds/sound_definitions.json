@@ -12,6 +12,10 @@
     "nagelzombie:zombie.berserker": {
       "category": "hostile",
       "sounds": [{"name": "sounds/berserker_roar", "stream": false}]
+    },
+    "nagelzombie:horde.warning": {
+      "category": "hostile",
+      "sounds": [{"name": "sounds/horde_warning", "stream": false}]
     }
   }
 }

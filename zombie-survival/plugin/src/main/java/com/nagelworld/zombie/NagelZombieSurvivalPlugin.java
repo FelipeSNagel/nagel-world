@@ -954,8 +954,24 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             spawned++;
         }
         if (spawned > 0) {
-            player.sendTitle(ChatColor.DARK_RED + "A HORDA CHEGOU", ChatColor.GRAY + "Defenda seu abrigo", 10, 70, 20);
+            playHordeWarning(player);
+            getServer().getScheduler().runTaskLater(this, () -> {
+                if (player.isOnline()) {
+                    player.sendTitle(ChatColor.DARK_RED + "A HORDA CHEGOU", ChatColor.GRAY + "Defenda seu abrigo", 10, 70, 20);
+                }
+            }, 36L);
         }
+    }
+
+    private void playHordeWarning(Player player) {
+        Location location = player.getLocation();
+        player.playSound(location, "nagelzombie:horde.warning", 2.4f, 1.0f);
+        player.playSound(location, Sound.BLOCK_BELL_RESONATE, 1.15f, 0.52f);
+        getServer().getScheduler().runTaskLater(this, () -> {
+            if (player.isOnline()) {
+                player.playSound(player.getLocation(), Sound.ENTITY_WITHER_AMBIENT, 0.32f, 0.58f);
+            }
+        }, 34L);
     }
 
     private Zombie spawnZombieVariant(Location location) {

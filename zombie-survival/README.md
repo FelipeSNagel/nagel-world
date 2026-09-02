@@ -60,6 +60,9 @@ proximidade equivalente sem duplicar o dano nos clientes Java.
   escopeta empurra proporcionalmente ao numero de chumbos que acertam.
 - Tiros atraem zumbis.
 - A cada dez dias surge uma horda durante a noite.
+- Hordas com nascimento valido disparam uma sirene grave original de sete
+  segundos. O titulo aparece depois do inicio do alerta; sons nativos em camada
+  garantem o aviso tambem nos clientes de PlayStation.
 - A noite aceita no maximo oito zumbis carregados por jogador. Hordas especiais
   possuem no maximo quatro novos infectados por jogador e respeitam esse limite.
 - Infectados surgem a pelo menos 36 blocos, somente ao ar livre, sobre piso
