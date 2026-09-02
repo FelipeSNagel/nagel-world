@@ -1,34 +1,35 @@
 #!/bin/sh
 set -eu
 
-ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
-PROJECT="$ROOT/zombie-survival"
+PROJECT="$(CDPATH= cd -- "$(dirname "$0")" && pwd)"
 BUILD="$PROJECT/build"
 DIST="$PROJECT/dist"
-API_JAR="$ROOT/plugin-src/nagel-aliases/lib/paper-api-1.21.4.jar"
-LIBRARIES="$ROOT/craftlandia-data/libraries"
+VENDOR="$PROJECT/vendor"
+API_JAR="$VENDOR/paper-api-1.21.4.jar"
 
 BUILD_JAVA_HOME="${BUILD_JAVA_HOME:-$(/usr/libexec/java_home -v 21 2>/dev/null || true)}"
 if [ -z "$BUILD_JAVA_HOME" ] || [ ! -x "$BUILD_JAVA_HOME/bin/javac" ]; then
   echo "JDK 21 ou superior nao encontrado." >&2
   exit 1
 fi
-if [ ! -f "$API_JAR" ] || [ ! -d "$LIBRARIES" ]; then
-  echo "Paper API ou bibliotecas locais nao encontradas." >&2
+if [ ! -f "$API_JAR" ] || [ ! -d "$VENDOR" ]; then
+  echo "Dependencias de compilacao nao encontradas em $VENDOR." >&2
   exit 1
 fi
 
 rm -rf "$BUILD" "$DIST"
 mkdir -p "$BUILD/classes" "$BUILD/generated-textures" "$BUILD/generated-sounds-wav" "$BUILD/generated-sounds" "$DIST"
 
-CLASSPATH="$API_JAR:$(find "$LIBRARIES" -type f -name '*.jar' -print | paste -sd: -)"
+CLASSPATH="$(find "$VENDOR" -type f -name '*.jar' -print | LC_ALL=C sort | paste -sd: -)"
 "$BUILD_JAVA_HOME/bin/javac" -proc:none --release 21 -classpath "$CLASSPATH" \
   -d "$BUILD/classes" \
   "$PROJECT/plugin/src/main/java/com/nagelworld/zombie/WeaponType.java" \
   "$PROJECT/plugin/src/main/java/com/nagelworld/zombie/NagelZombieSurvivalPlugin.java"
 cp "$PROJECT/plugin/src/main/resources/plugin.yml" "$BUILD/classes/plugin.yml"
 cp "$PROJECT/plugin/src/main/resources/config.yml" "$BUILD/classes/config.yml"
-"$BUILD_JAVA_HOME/bin/jar" --create --file "$DIST/NagelZombieSurvival.jar" -C "$BUILD/classes" .
+find "$BUILD/classes" -type f -exec touch -t 202601010000 {} +
+"$BUILD_JAVA_HOME/bin/jar" --create --file "$DIST/NagelZombieSurvival.jar" \
+  --date=2026-01-01T00:00:00Z -C "$BUILD/classes" .
 
 "$BUILD_JAVA_HOME/bin/javac" --release 21 -d "$BUILD/tools" \
   "$PROJECT/tools/GenerateTextures.java" "$PROJECT/tools/GenerateSounds.java"

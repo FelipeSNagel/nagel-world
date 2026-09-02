@@ -93,7 +93,7 @@ proximidade equivalente sem duplicar o dano nos clientes Java.
 Docker Desktop precisa estar aberto.
 
 ```sh
-cd zombie-survival
+cd /Users/felipenagel/Projects/games/zombie-survival
 cp .env.example .env
 make start
 make logs
@@ -104,9 +104,9 @@ local do Mac na porta UDP `19133`.
 
 ## Coolify
 
-Crie uma nova aplicacao Docker Compose usando o mesmo repositorio:
+Crie uma aplicacao Docker Compose usando o repositorio `nagel-zombie-survival`:
 
-- base directory: `/zombie-survival`;
+- base directory: `/`;
 - compose file: `/docker-compose.coolify.yml`;
 - abra `25566/TCP` e `19133/UDP` no firewall da VPS;
 - defina `ZOMBIE_RCON_PASSWORD` com uma senha forte;
@@ -121,4 +121,5 @@ reconstruido, atualize `ZOMBIE_RESOURCE_PACK_SHA1` com o conteudo de
 ## Desenvolvimento
 
 `./build.sh` compila o plugin, gera as texturas, os modelos 3D das armas e cria
-os dois pacotes em `dist/`.
+os dois pacotes em `dist/`. As dependencias de compilacao ficam em `vendor/`,
+portanto este projeto nao depende dos arquivos do servidor Craftlandia.
