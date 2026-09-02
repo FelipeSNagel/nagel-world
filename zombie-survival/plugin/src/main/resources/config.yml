@@ -9,9 +9,6 @@ zombies-break-blocks: true
 zombies-build-stairs: true
 zombie-breaker-chance: 0.16
 zombie-builder-chance: 0.12
-zombies-spawn-in-daylight: true
-daylight-spawn-chance: 0.12
-daylight-zombie-cap: 3
 night-zombie-cap-per-player: 12
 minimum-zombie-spawn-distance: 36
 maximum-zombie-spawn-block-light: 0

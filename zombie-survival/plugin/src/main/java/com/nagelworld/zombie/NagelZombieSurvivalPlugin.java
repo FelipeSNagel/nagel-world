@@ -146,11 +146,8 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private int hordePhaseBreakSeconds;
     private boolean zombiesBreakBlocks;
     private boolean zombiesBuildStairs;
-    private boolean zombiesSpawnInDaylight;
     private boolean friendlyFire;
     private int protectedSpawnRadius;
-    private double daylightSpawnChance;
-    private int daylightZombieCap;
     private int nightZombieCapPerPlayer;
     private double minimumZombieSpawnDistance;
     private int maximumZombieSpawnBlockLight;
@@ -170,11 +167,8 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         hordePhaseBreakSeconds = Math.max(5, getConfig().getInt("horde-phase-break-seconds", 12));
         zombiesBreakBlocks = getConfig().getBoolean("zombies-break-blocks", true);
         zombiesBuildStairs = getConfig().getBoolean("zombies-build-stairs", true);
-        zombiesSpawnInDaylight = getConfig().getBoolean("zombies-spawn-in-daylight", true);
         friendlyFire = getConfig().getBoolean("friendly-fire", false);
         protectedSpawnRadius = Math.max(0, getConfig().getInt("protected-spawn-radius", 12));
-        daylightSpawnChance = Math.max(0.0, Math.min(1.0, getConfig().getDouble("daylight-spawn-chance", 0.12)));
-        daylightZombieCap = Math.max(0, getConfig().getInt("daylight-zombie-cap", 3));
         nightZombieCapPerPlayer = Math.max(1, getConfig().getInt("night-zombie-cap-per-player", 12));
         if (nightZombieCapPerPlayer == 8) nightZombieCapPerPlayer = 12;
         minimumZombieSpawnDistance = Math.max(24.0, getConfig().getDouble("minimum-zombie-spawn-distance", 36.0));
@@ -384,9 +378,6 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
                 if (location.isWorldLoaded() && canSpawnZombieAt(location)
                     && canSpawnMoreZombies(location.getWorld())) spawnZombieVariant(location);
             });
-            return;
-        }
-        if (!zombiesSpawnInDaylight && zombie.getWorld().getTime() < 12000) {
             return;
         }
         configureZombie(zombie);
@@ -941,7 +932,6 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     }
 
     private void tickHordes() {
-        tickDaylightZombies();
         for (World world : Bukkit.getWorlds()) {
             long day = world.getFullTime() / 24000L;
             long time = world.getTime();
@@ -955,39 +945,6 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             if (players.isEmpty()) continue;
             lastHordeDay.put(world.getUID(), day);
             spawnHorde(world, players);
-        }
-    }
-
-    private void tickDaylightZombies() {
-        if (!zombiesSpawnInDaylight) return;
-        for (World world : Bukkit.getWorlds()) {
-            long time = world.getTime();
-            if (time >= 12000 || world.getEnvironment() != World.Environment.NORMAL || isHordeActive(world)) continue;
-            for (Player player : world.getPlayers()) {
-                if (player.getGameMode() != GameMode.SURVIVAL) continue;
-                List<Zombie> nearbyZombies = new ArrayList<>();
-                for (Entity entity : world.getNearbyEntities(player.getLocation(), 48, 20, 48)) {
-                    if (entity instanceof Zombie zombie) nearbyZombies.add(zombie);
-                }
-                nearbyZombies.sort((first, second) -> Double.compare(
-                    second.getLocation().distanceSquared(player.getLocation()),
-                    first.getLocation().distanceSquared(player.getLocation())
-                ));
-                while (nearbyZombies.size() > daylightZombieCap) {
-                    nearbyZombies.remove(0).remove();
-                }
-                if (nearbyZombies.size() >= daylightZombieCap
-                    || ThreadLocalRandom.current().nextDouble() > daylightSpawnChance) continue;
-                double angle = ThreadLocalRandom.current().nextDouble(Math.PI * 2);
-                double distance = ThreadLocalRandom.current().nextDouble(38.0, 54.0);
-                int x = player.getLocation().getBlockX() + (int) (Math.cos(angle) * distance);
-                int z = player.getLocation().getBlockZ() + (int) (Math.sin(angle) * distance);
-                int y = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES) + 1;
-                Location spawn = new Location(world, x + 0.5, y, z + 0.5);
-                if (!canSpawnZombieAt(spawn)) continue;
-                Zombie zombie = spawnZombieVariant(spawn);
-                zombie.setTarget(player);
-            }
         }
     }
 

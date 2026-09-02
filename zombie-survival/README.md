@@ -51,7 +51,9 @@ proximidade equivalente sem duplicar o dano nos clientes Java.
   velocidades, vida e percepcao diferentes.
 - 78% dos infectados sao lentos; cacadores, corredores, brutamontes e alfas
   formam os 22% restantes.
-- Zumbis nao queimam durante o dia e emitem gemidos com tons diferentes.
+- Zumbis nao queimam nem desaparecem durante o dia. O amanhecer bloqueia novos
+  nascimentos naturais, mas os infectados comuns e os da horda permanecem ate
+  serem mortos.
 - Tres corpos redesenhados, com pele continua, feridas localizadas e seis
   conjuntos de roupa geram varias aparencias sem o efeito pontilhado.
 - O Berserker possui escala 1,45x, 40 coracoes, velocidade baixa, ataque forte
