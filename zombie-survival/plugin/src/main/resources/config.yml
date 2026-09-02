@@ -1,6 +1,8 @@
 season-length-days: 28
 horde-interval-days: 10
-horde-size-per-player: 4
+horde-minimum-size: 30
+horde-maximum-size: 100
+horde-wave-size: 5
 zombies-break-blocks: true
 zombies-build-stairs: true
 zombie-breaker-chance: 0.16
