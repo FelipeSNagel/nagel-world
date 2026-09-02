@@ -23,6 +23,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -114,6 +115,8 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private final Map<UUID, Double> lastTemperature = new HashMap<>();
     private final Map<UUID, Long> lastHordeDay = new HashMap<>();
     private final Map<UUID, Integer> hordeCapacityBonus = new HashMap<>();
+    private final Map<UUID, Long> hordeScheduledUntil = new HashMap<>();
+    private final Map<UUID, Long> lastHordeMusic = new HashMap<>();
     private final Map<UUID, Long> lastBerserkerRoar = new HashMap<>();
     private final Map<UUID, Long> lastZombieBuild = new HashMap<>();
     private final Map<String, Block> temporaryZombieBlocks = new HashMap<>();
@@ -172,7 +175,8 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         protectedSpawnRadius = Math.max(0, getConfig().getInt("protected-spawn-radius", 12));
         daylightSpawnChance = Math.max(0.0, Math.min(1.0, getConfig().getDouble("daylight-spawn-chance", 0.12)));
         daylightZombieCap = Math.max(0, getConfig().getInt("daylight-zombie-cap", 3));
-        nightZombieCapPerPlayer = Math.max(1, getConfig().getInt("night-zombie-cap-per-player", 8));
+        nightZombieCapPerPlayer = Math.max(1, getConfig().getInt("night-zombie-cap-per-player", 12));
+        if (nightZombieCapPerPlayer == 8) nightZombieCapPerPlayer = 12;
         minimumZombieSpawnDistance = Math.max(24.0, getConfig().getDouble("minimum-zombie-spawn-distance", 36.0));
         maximumZombieSpawnBlockLight = Math.max(0, Math.min(15,
             getConfig().getInt("maximum-zombie-spawn-block-light", 0)));
@@ -205,6 +209,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         getServer().getScheduler().runTaskTimer(this, this::tickAutomaticWeapons, 2L, 2L);
         getServer().getScheduler().runTaskTimer(this, this::tickZombieBreaking, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, this::tickHordeTargets, 20L, 20L);
+        getServer().getScheduler().runTaskTimer(this, this::tickHordeMusic, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, this::tickHordes, 200L, 200L);
         getServer().getScheduler().runTaskTimer(this, this::tickZombieAtmosphere, 80L, 80L);
         for (World world : Bukkit.getWorlds()) {
@@ -223,6 +228,8 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
 
     @Override
     public void onDisable() {
+        Bukkit.getOnlinePlayers().forEach(player ->
+            player.stopSound("nagelzombie:horde.tension", SoundCategory.MUSIC));
         temporaryZombieBlocks.values().forEach(block -> {
             if (block.getType() == Material.COBBLESTONE) block.setType(Material.AIR, false);
         });
@@ -438,7 +445,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     }
 
     private boolean isHordeActive(World world) {
-        return !isDaytime(world) && hordeCapacityBonus.getOrDefault(world.getUID(), 0) > 0;
+        return hordeCapacityBonus.getOrDefault(world.getUID(), 0) > 0;
     }
 
     @EventHandler
@@ -482,11 +489,30 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             case "nutricao" -> showNutrition(player);
             case "estacao" -> showSeason(player);
             case "recarregar" -> reloadHeldWeapon(player);
+            case "horda" -> startManualHorde(player);
             case "sethome" -> setHome(player);
             case "home" -> teleportHome(player);
             default -> { return false; }
         }
         return true;
+    }
+
+    private void startManualHorde(Player player) {
+        World world = player.getWorld();
+        if (isHordeActive(world)) {
+            player.sendMessage(ChatColor.RED + "Ja existe uma horda ativa neste mundo.");
+            return;
+        }
+        List<Player> players = world.getPlayers().stream()
+            .filter(online -> online.getGameMode() == GameMode.SURVIVAL)
+            .toList();
+        if (players.isEmpty()) {
+            player.sendMessage(ChatColor.RED + "Entre no modo sobrevivencia para iniciar a horda.");
+            return;
+        }
+        lastHordeDay.put(world.getUID(), world.getFullTime() / 24000L);
+        spawnHorde(world, players);
+        player.sendMessage(ChatColor.DARK_RED + "Horda iniciada manualmente.");
     }
 
     private void fire(Player player, ItemStack item, WeaponType weapon) {
@@ -917,11 +943,10 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private void tickHordes() {
         tickDaylightZombies();
         for (World world : Bukkit.getWorlds()) {
-            if (isDaytime(world)) hordeCapacityBonus.remove(world.getUID());
             long day = world.getFullTime() / 24000L;
             long time = world.getTime();
             if (day == 0 || day % hordeInterval != 0 || time < 13000 || time > 13400
-                || lastHordeDay.getOrDefault(world.getUID(), -1L) == day) {
+                || lastHordeDay.getOrDefault(world.getUID(), -1L) == day || isHordeActive(world)) {
                 continue;
             }
             List<Player> players = world.getPlayers().stream()
@@ -937,7 +962,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         if (!zombiesSpawnInDaylight) return;
         for (World world : Bukkit.getWorlds()) {
             long time = world.getTime();
-            if (time >= 12000 || world.getEnvironment() != World.Environment.NORMAL) continue;
+            if (time >= 12000 || world.getEnvironment() != World.Environment.NORMAL || isHordeActive(world)) continue;
             for (Player player : world.getPlayers()) {
                 if (player.getGameMode() != GameMode.SURVIVAL) continue;
                 List<Zombie> nearbyZombies = new ArrayList<>();
@@ -1003,6 +1028,8 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             distributed += phaseAmount;
             phaseStart += waves * 20L + hordePhaseBreakSeconds * 20L;
         }
+        long scheduledTicks = phaseStart - hordePhaseBreakSeconds * 20L;
+        hordeScheduledUntil.put(world.getUID(), System.currentTimeMillis() + scheduledTicks * 50L);
     }
 
     private List<Integer> splitHordeIntoPhases(int total, int phases) {
@@ -1124,6 +1151,36 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
                 Player nearest = nearestSurvivalPlayer(world, zombie.getLocation());
                 if (nearest != null) zombie.setTarget(nearest);
             }
+        }
+    }
+
+    private void tickHordeMusic() {
+        long now = System.currentTimeMillis();
+        Set<UUID> listeningPlayers = new HashSet<>();
+        for (World world : Bukkit.getWorlds()) {
+            UUID worldId = world.getUID();
+            boolean scheduled = now < hordeScheduledUntil.getOrDefault(worldId, 0L);
+            boolean hasHordeZombies = world.getEntitiesByClass(Zombie.class).stream().anyMatch(this::isHordeZombie);
+            if (!scheduled && !hasHordeZombies) {
+                hordeCapacityBonus.remove(worldId);
+                hordeScheduledUntil.remove(worldId);
+                continue;
+            }
+            for (Player player : world.getPlayers()) {
+                if (player.getGameMode() == GameMode.SPECTATOR) continue;
+                UUID playerId = player.getUniqueId();
+                listeningPlayers.add(playerId);
+                if (now - lastHordeMusic.getOrDefault(playerId, 0L) < 22000L) continue;
+                player.playSound(player, "nagelzombie:horde.tension", SoundCategory.MUSIC, 0.82f, 1.0f);
+                player.playSound(player.getLocation(), Sound.AMBIENT_CAVE, SoundCategory.AMBIENT, 0.18f, 0.62f);
+                lastHordeMusic.put(playerId, now);
+            }
+        }
+        for (UUID playerId : new HashSet<>(lastHordeMusic.keySet())) {
+            if (listeningPlayers.contains(playerId)) continue;
+            Player player = Bukkit.getPlayer(playerId);
+            if (player != null) player.stopSound("nagelzombie:horde.tension", SoundCategory.MUSIC);
+            lastHordeMusic.remove(playerId);
         }
     }
 
@@ -1311,9 +1368,10 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     }
 
     private void enforceNightZombieCap(World world) {
-        if (isDaytime(world)) return;
+        if (isDaytime(world) && !isHordeActive(world)) return;
         if (world.getPlayers().stream().noneMatch(player -> player.getGameMode() == GameMode.SURVIVAL)) {
             hordeCapacityBonus.remove(world.getUID());
+            hordeScheduledUntil.remove(world.getUID());
         }
         int cap = nightZombieCap(world);
         List<Zombie> zombies = new ArrayList<>(world.getEntitiesByClass(Zombie.class));

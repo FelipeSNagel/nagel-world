@@ -16,6 +16,10 @@
     "nagelzombie:horde.warning": {
       "category": "hostile",
       "sounds": [{"name": "sounds/horde_warning", "stream": false}]
+    },
+    "nagelzombie:horde.tension": {
+      "category": "music",
+      "sounds": [{"name": "sounds/horde_tension", "stream": true}]
     }
   }
 }

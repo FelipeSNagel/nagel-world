@@ -1,5 +1,5 @@
 name: NagelZombieSurvival
-version: 0.11.0
+version: 0.12.0
 main: com.nagelworld.zombie.NagelZombieSurvivalPlugin
 api-version: '1.21'
 author: Nagel
@@ -21,6 +21,10 @@ commands:
   recarregar:
     description: Recarrega a arma que esta na mao.
     usage: /recarregar
+  horda:
+    description: Inicia manualmente uma horda especial.
+    usage: /horda
+    permission: nagelzombie.admin
   sethome:
     description: Salva sua casa atual.
     usage: /sethome

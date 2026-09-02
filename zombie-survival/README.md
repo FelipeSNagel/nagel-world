@@ -41,6 +41,8 @@ proximidade equivalente sem duplicar o dano nos clientes Java.
 - `/nutricao`: carboidratos, proteinas, gorduras, vitaminas e hidratacao.
 - `/estacao`: estacao, dia do mundo e temperatura atual.
 - `/sethome` e `/home`: casa pessoal, sem depender de plugins externos.
+- `/horda`: inicia imediatamente uma horda especial; disponivel somente para
+  administradores do servidor.
 - Temperatura considera estacao, bioma, clima, horario, altitude, agua e calor
   proximo.
 - Monstros naturais comuns sao substituidos por infectados; aranhas, creepers
@@ -66,9 +68,11 @@ proximidade equivalente sem duplicar o dano nos clientes Java.
 - Hordas com nascimento valido disparam uma sirene grave original de sete
   segundos. O titulo aparece depois do inicio do alerta; sons nativos em camada
   garantem o aviso tambem nos clientes de PlayStation.
-- A noite comum aceita no maximo oito zumbis carregados por jogador. A horda
+- Uma trilha original de suspense permanece ativa desde o alerta, atravessa os
+  intervalos entre fases e termina quando o ultimo infectado da horda morrer.
+- A noite comum aceita no maximo 12 zumbis carregados por jogador. A horda
   especial amplia temporariamente esse limite pelo tamanho sorteado e bloqueia
-  nascimentos naturais adicionais ate o amanhecer.
+  nascimentos naturais adicionais enquanto o evento estiver ativo.
 - Infectados da horda nao ficam vagando: recebem alcance de perseguicao maior,
   um pequeno aumento de velocidade e recalculam a cada segundo o jogador
   sobrevivente mais proximo como objetivo.

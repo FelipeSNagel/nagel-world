@@ -20,6 +20,7 @@ public final class GenerateSounds {
         write(output.resolve("infected_ambient_3.wav"), synth(1.85, 3911L, 2, false));
         write(output.resolve("berserker_roar.wav"), synth(3.45, 99173L, 0, true));
         write(output.resolve("horde_warning.wav"), hordeWarning(7.2, 773341L));
+        write(output.resolve("horde_tension.wav"), hordeTension(24.0, 884921L));
     }
 
     private static byte[] synth(double duration, long seed, int variant, boolean berserker) {
@@ -97,6 +98,47 @@ public final class GenerateSounds {
                 sample += impact * impactEnvelope * 0.78 + filteredNoise * impactEnvelope * 0.42;
             }
             sample = Math.tanh(sample * 1.35) * 0.84;
+            short value = (short) Math.round(Math.max(-1.0, Math.min(1.0, sample)) * 32767.0);
+            pcm[i * 2] = (byte) (value & 0xff);
+            pcm[i * 2 + 1] = (byte) ((value >>> 8) & 0xff);
+        }
+        return pcm;
+    }
+
+    private static byte[] hordeTension(double duration, long seed) {
+        int samples = (int) (duration * SAMPLE_RATE);
+        byte[] pcm = new byte[samples * 2];
+        Random random = new Random(seed);
+        double dronePhase = 0.0;
+        double dissonantPhase = 0.0;
+        double highPhase = 0.0;
+        double filteredNoise = 0.0;
+        for (int i = 0; i < samples; i++) {
+            double t = i / SAMPLE_RATE;
+            double attack = Math.min(1.0, t / 1.8);
+            double release = Math.min(1.0, (duration - t) / 1.8);
+            double envelope = Math.max(0.0, attack * release);
+            double movement = 0.5 + 0.5 * Math.sin(Math.PI * 2.0 * t / 12.0 - 1.1);
+            dronePhase += Math.PI * 2.0 * (43.0 + movement * 3.0) / SAMPLE_RATE;
+            dissonantPhase += Math.PI * 2.0 * (91.0 + movement * 7.0) / SAMPLE_RATE;
+            highPhase += Math.PI * 2.0 * (127.0 - movement * 5.0) / SAMPLE_RATE;
+            filteredNoise = filteredNoise * 0.996
+                + (random.nextDouble() * 2.0 - 1.0) * 0.004;
+
+            double heartbeatPosition = t % 2.4;
+            double firstBeat = Math.exp(-heartbeatPosition * 8.0);
+            double secondBeatTime = heartbeatPosition - 0.34;
+            double secondBeat = secondBeatTime >= 0.0 ? Math.exp(-secondBeatTime * 10.0) * 0.72 : 0.0;
+            double heartbeat = (firstBeat + secondBeat)
+                * Math.sin(Math.PI * 2.0 * (52.0 - heartbeatPosition * 7.0) * heartbeatPosition);
+
+            double drone = Math.sin(dronePhase)
+                + 0.36 * Math.sin(dronePhase * 2.01 + 0.7)
+                + 0.21 * Math.sin(dissonantPhase)
+                + 0.13 * Math.sin(highPhase);
+            double distantWind = filteredNoise * (0.65 + movement * 0.45);
+            double sample = (drone * 0.34 + heartbeat * 0.54 + distantWind * 1.7) * envelope;
+            sample = Math.tanh(sample * 1.22) * 0.72;
             short value = (short) Math.round(Math.max(-1.0, Math.min(1.0, sample)) * 32767.0);
             pcm[i * 2] = (byte) (value & 0xff);
             pcm[i * 2 + 1] = (byte) ((value >>> 8) & 0xff);
