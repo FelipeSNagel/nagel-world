@@ -60,14 +60,18 @@ proximidade equivalente sem duplicar o dano nos clientes Java.
   escopeta empurra proporcionalmente ao numero de chumbos que acertam.
 - Tiros atraem zumbis.
 - A cada dez dias surge uma horda durante a noite, sorteada entre 30 e 100
-  infectados no total. Eles chegam em ondas de cinco por segundo para manter a
-  pressao sem congelar o servidor.
+  infectados no total e dividida aleatoriamente em uma a cinco fases. Cada fase
+  recebe uma quantidade propria, com uma pausa curta entre elas, e libera ondas
+  de cinco por segundo para manter a pressao sem congelar o servidor.
 - Hordas com nascimento valido disparam uma sirene grave original de sete
   segundos. O titulo aparece depois do inicio do alerta; sons nativos em camada
   garantem o aviso tambem nos clientes de PlayStation.
 - A noite comum aceita no maximo oito zumbis carregados por jogador. A horda
   especial amplia temporariamente esse limite pelo tamanho sorteado e bloqueia
   nascimentos naturais adicionais ate o amanhecer.
+- Infectados da horda nao ficam vagando: recebem alcance de perseguicao maior,
+  um pequeno aumento de velocidade e recalculam a cada segundo o jogador
+  sobrevivente mais proximo como objetivo.
 - Infectados surgem a pelo menos 36 blocos, somente ao ar livre, sobre piso
   solido e com luz de blocos igual a zero. Tetos, tochas, lanternas e outras
   fontes de luz impedem novos nascimentos dentro das construcoes.

@@ -3,6 +3,8 @@ horde-interval-days: 10
 horde-minimum-size: 30
 horde-maximum-size: 100
 horde-wave-size: 5
+horde-maximum-phases: 5
+horde-phase-break-seconds: 12
 zombies-break-blocks: true
 zombies-build-stairs: true
 zombie-breaker-chance: 0.16

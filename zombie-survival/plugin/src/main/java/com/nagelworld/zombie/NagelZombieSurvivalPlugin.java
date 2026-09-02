@@ -126,6 +126,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private NamespacedKey zombieLookKey;
     private NamespacedKey zombieBreakerKey;
     private NamespacedKey zombieBuilderKey;
+    private NamespacedKey hordeZombieKey;
     private NamespacedKey homeWorldKey;
     private NamespacedKey homeXKey;
     private NamespacedKey homeYKey;
@@ -138,6 +139,8 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
     private int hordeMinimumSize;
     private int hordeMaximumSize;
     private int hordeWaveSize;
+    private int hordeMaximumPhases;
+    private int hordePhaseBreakSeconds;
     private boolean zombiesBreakBlocks;
     private boolean zombiesBuildStairs;
     private boolean zombiesSpawnInDaylight;
@@ -160,6 +163,8 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         hordeMinimumSize = Math.max(1, getConfig().getInt("horde-minimum-size", 30));
         hordeMaximumSize = Math.max(hordeMinimumSize, getConfig().getInt("horde-maximum-size", 100));
         hordeWaveSize = Math.max(1, Math.min(10, getConfig().getInt("horde-wave-size", 5)));
+        hordeMaximumPhases = Math.max(1, Math.min(5, getConfig().getInt("horde-maximum-phases", 5)));
+        hordePhaseBreakSeconds = Math.max(5, getConfig().getInt("horde-phase-break-seconds", 12));
         zombiesBreakBlocks = getConfig().getBoolean("zombies-break-blocks", true);
         zombiesBuildStairs = getConfig().getBoolean("zombies-build-stairs", true);
         zombiesSpawnInDaylight = getConfig().getBoolean("zombies-spawn-in-daylight", true);
@@ -182,6 +187,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         zombieLookKey = new NamespacedKey(this, "zombie_look");
         zombieBreakerKey = new NamespacedKey(this, "zombie_breaker");
         zombieBuilderKey = new NamespacedKey(this, "zombie_builder");
+        hordeZombieKey = new NamespacedKey(this, "horde_zombie");
         homeWorldKey = new NamespacedKey(this, "home_world");
         homeXKey = new NamespacedKey(this, "home_x");
         homeYKey = new NamespacedKey(this, "home_y");
@@ -198,6 +204,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         getServer().getScheduler().runTaskTimer(this, this::tickPlayers, 40L, 40L);
         getServer().getScheduler().runTaskTimer(this, this::tickAutomaticWeapons, 2L, 2L);
         getServer().getScheduler().runTaskTimer(this, this::tickZombieBreaking, 20L, 20L);
+        getServer().getScheduler().runTaskTimer(this, this::tickHordeTargets, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, this::tickHordes, 200L, 200L);
         getServer().getScheduler().runTaskTimer(this, this::tickZombieAtmosphere, 80L, 80L);
         for (World world : Bukkit.getWorlds()) {
@@ -211,7 +218,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             + Math.round(minimumZombieSpawnDistance) + ", luz maxima " + maximumZombieSpawnBlockLight
             + ", somente ao ar livre: " + zombiesSpawnOutdoorsOnly + ".");
         getLogger().info("Horda especial: " + hordeMinimumSize + " a " + hordeMaximumSize
-            + " infectados em ondas de " + hordeWaveSize + ".");
+            + " infectados, ate " + hordeMaximumPhases + " fases, ondas de " + hordeWaveSize + ".");
     }
 
     @Override
@@ -961,23 +968,72 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
 
     private void spawnHorde(World world, List<Player> players) {
         int total = ThreadLocalRandom.current().nextInt(hordeMinimumSize, hordeMaximumSize + 1);
+        int phases = ThreadLocalRandom.current().nextInt(1, hordeMaximumPhases + 1);
+        List<Integer> phaseSizes = splitHordeIntoPhases(total, phases);
         hordeCapacityBonus.put(world.getUID(), total);
         List<UUID> playerIds = players.stream().map(Player::getUniqueId).toList();
-        players.forEach(player -> playHordeWarning(player, total));
+        players.forEach(player -> playHordeWarning(player, total, phases));
+        getLogger().info("Horda sorteada em " + world.getName() + ": " + total
+            + " infectados em " + phases + " fases " + phaseSizes + ".");
 
-        int waves = (total + hordeWaveSize - 1) / hordeWaveSize;
-        for (int wave = 0; wave < waves; wave++) {
-            int waveIndex = wave;
-            int amount = Math.min(hordeWaveSize, total - wave * hordeWaveSize);
-            getServer().getScheduler().runTaskLater(this, () -> {
-                for (int index = 0; index < amount; index++) {
-                    UUID targetId = playerIds.get((waveIndex * hordeWaveSize + index) % playerIds.size());
-                    Player target = Bukkit.getPlayer(targetId);
-                    if (target != null && target.isOnline() && target.getWorld().equals(world)) {
-                        trySpawnHordeZombie(target);
+        long phaseStart = 60L;
+        int distributed = 0;
+        for (int phase = 0; phase < phases; phase++) {
+            int phaseNumber = phase + 1;
+            int phaseAmount = phaseSizes.get(phase);
+            int startingIndex = distributed;
+            long currentPhaseStart = phaseStart;
+            getServer().getScheduler().runTaskLater(this,
+                () -> announceHordePhase(world, playerIds, phaseNumber, phases, phaseAmount), currentPhaseStart);
+
+            int waves = (phaseAmount + hordeWaveSize - 1) / hordeWaveSize;
+            for (int wave = 0; wave < waves; wave++) {
+                int waveIndex = wave;
+                int amount = Math.min(hordeWaveSize, phaseAmount - wave * hordeWaveSize);
+                getServer().getScheduler().runTaskLater(this, () -> {
+                    for (int index = 0; index < amount; index++) {
+                        UUID targetId = playerIds.get((startingIndex + waveIndex * hordeWaveSize + index) % playerIds.size());
+                        Player target = Bukkit.getPlayer(targetId);
+                        if (target != null && target.isOnline() && target.getWorld().equals(world)) {
+                            trySpawnHordeZombie(target);
+                        }
                     }
-                }
-            }, 60L + wave * 20L);
+                }, currentPhaseStart + wave * 20L);
+            }
+            distributed += phaseAmount;
+            phaseStart += waves * 20L + hordePhaseBreakSeconds * 20L;
+        }
+    }
+
+    private List<Integer> splitHordeIntoPhases(int total, int phases) {
+        List<Integer> sizes = new ArrayList<>();
+        int remaining = total;
+        int minimumPerPhase = Math.min(hordeWaveSize, Math.max(1, total / phases / 2));
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        for (int phase = 0; phase < phases; phase++) {
+            int remainingPhases = phases - phase - 1;
+            if (remainingPhases == 0) {
+                sizes.add(remaining);
+                break;
+            }
+            int average = remaining / (remainingPhases + 1);
+            int lower = Math.max(minimumPerPhase, average / 2);
+            int upper = Math.min(remaining - remainingPhases * minimumPerPhase,
+                Math.max(lower, average + average / 2));
+            int amount = random.nextInt(lower, upper + 1);
+            sizes.add(amount);
+            remaining -= amount;
+        }
+        return sizes;
+    }
+
+    private void announceHordePhase(World world, List<UUID> playerIds, int phase, int phases, int amount) {
+        for (UUID playerId : playerIds) {
+            Player player = Bukkit.getPlayer(playerId);
+            if (player == null || !player.isOnline() || !player.getWorld().equals(world)) continue;
+            player.sendTitle(ChatColor.DARK_RED + "FASE " + phase + "/" + phases,
+                ChatColor.GRAY + String.valueOf(amount) + " infectados", 5, 45, 10);
+            player.playSound(player.getLocation(), Sound.EVENT_RAID_HORN, 1.0f, 0.72f + phase * 0.04f);
         }
     }
 
@@ -992,12 +1048,13 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             Location spawn = new Location(world, x + 0.5, y, z + 0.5);
             if (!canSpawnZombieAt(spawn)) continue;
             Zombie zombie = spawnZombieVariant(spawn);
-            zombie.setTarget(target);
+            markHordeZombie(zombie);
+            zombie.setTarget(nearestSurvivalPlayer(zombie.getWorld(), zombie.getLocation()));
             return;
         }
     }
 
-    private void playHordeWarning(Player player, int total) {
+    private void playHordeWarning(Player player, int total, int phases) {
         Location location = player.getLocation();
         player.playSound(location, "nagelzombie:horde.warning", 2.4f, 1.0f);
         player.playSound(location, Sound.BLOCK_BELL_RESONATE, 1.15f, 0.52f);
@@ -1005,7 +1062,7 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
             if (player.isOnline()) {
                 player.playSound(player.getLocation(), Sound.ENTITY_WITHER_AMBIENT, 0.32f, 0.58f);
                 player.sendTitle(ChatColor.DARK_RED + "A HORDA CHEGOU",
-                    ChatColor.GRAY + String.valueOf(total) + " infectados se aproximam", 10, 70, 20);
+                    ChatColor.GRAY + String.valueOf(total) + " infectados em " + phases + " fases", 10, 70, 20);
             }
         }, 34L);
     }
@@ -1033,11 +1090,55 @@ public final class NagelZombieSurvivalPlugin extends JavaPlugin implements Liste
         assignZombieAbilities(zombie, type);
         applyZombieProfile(zombie, type);
         applyZombieLook(zombie, type);
+        if (isHordeZombie(zombie)) applyHordeProfile(zombie);
         zombie.setCustomNameVisible(false);
         zombie.setCanBreakDoors(true);
         zombie.setShouldBurnInDay(false);
         zombie.setFireTicks(0);
-        zombie.setRemoveWhenFarAway(true);
+        zombie.setRemoveWhenFarAway(!isHordeZombie(zombie));
+    }
+
+    private void markHordeZombie(Zombie zombie) {
+        zombie.getPersistentDataContainer().set(hordeZombieKey, PersistentDataType.BYTE, (byte) 1);
+        applyHordeProfile(zombie);
+        zombie.setRemoveWhenFarAway(false);
+    }
+
+    private boolean isHordeZombie(Zombie zombie) {
+        return Byte.valueOf((byte) 1).equals(
+            zombie.getPersistentDataContainer().get(hordeZombieKey, PersistentDataType.BYTE));
+    }
+
+    private void applyHordeProfile(Zombie zombie) {
+        AttributeInstance speed = zombie.getAttribute(Attribute.MOVEMENT_SPEED);
+        if (speed != null) speed.setBaseValue(Math.min(0.38, speed.getBaseValue() * 1.12));
+        AttributeInstance range = zombie.getAttribute(Attribute.FOLLOW_RANGE);
+        if (range != null) range.setBaseValue(Math.max(128.0, range.getBaseValue()));
+        zombie.setAware(true);
+    }
+
+    private void tickHordeTargets() {
+        for (World world : Bukkit.getWorlds()) {
+            for (Zombie zombie : world.getEntitiesByClass(Zombie.class)) {
+                if (!isHordeZombie(zombie)) continue;
+                Player nearest = nearestSurvivalPlayer(world, zombie.getLocation());
+                if (nearest != null) zombie.setTarget(nearest);
+            }
+        }
+    }
+
+    private Player nearestSurvivalPlayer(World world, Location location) {
+        Player nearest = null;
+        double best = Double.MAX_VALUE;
+        for (Player player : world.getPlayers()) {
+            if (player.getGameMode() != GameMode.SURVIVAL) continue;
+            double distance = player.getLocation().distanceSquared(location);
+            if (distance < best) {
+                best = distance;
+                nearest = player;
+            }
+        }
+        return nearest;
     }
 
     private void assignZombieAbilities(Zombie zombie, String type) {
