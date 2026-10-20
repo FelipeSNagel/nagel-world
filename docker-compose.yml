@@ -169,12 +169,12 @@ services:
         setblock 11 90 11 torch
       MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
       MODRINTH_PROJECTS: |
-        luckperms
-        essentialsx
-        essentialsx-spawn
-        griefprevention
-        vaultunlocked
-        quickshop-hikari?
+        luckperms:b0mk8uS6
+        essentialsx:nY6VN1XH
+        essentialsx-spawn:lc5JHiNJ
+        griefprevention:dGfCZHqk
+        vaultunlocked:qZgRzoYs
+        quickshop-hikari:OxlW1jL5
       PLUGINS: |
         https://github.com/ViaVersion/ViaVersion/releases/download/5.12.1/ViaVersion-5.12.1.jar
         https://github.com/ViaVersion/ViaBackwards/releases/download/5.12.1/ViaBackwards-5.12.1.jar
