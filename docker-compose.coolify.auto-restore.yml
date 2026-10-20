@@ -110,8 +110,8 @@ services:
     environment:
       EULA: "TRUE"
       TYPE: "PAPER"
-      VERSION: "26.1.2"
-      PAPER_BUILD: "74"
+      VERSION: "26.3"
+      PAPER_BUILD: "206"
       FORCE_REDOWNLOAD: "true"
       VERSION_FROM_MODRINTH_PROJECTS: "false"
       MEMORY: "${CRAFT_MEMORY:-2G}"
@@ -209,9 +209,9 @@ services:
         vaultunlocked
         quickshop-hikari?
       PLUGINS: |
-        https://github.com/ViaVersion/ViaVersion/releases/download/5.11.0/ViaVersion-5.11.0.jar
-        https://github.com/ViaVersion/ViaBackwards/releases/download/5.11.0/ViaBackwards-5.11.0.jar
-        https://download.geysermc.org/v2/projects/geyser/versions/2.11.3/builds/1245/downloads/spigot
+        https://github.com/ViaVersion/ViaVersion/releases/download/5.12.1/ViaVersion-5.12.1.jar
+        https://github.com/ViaVersion/ViaBackwards/releases/download/5.12.1/ViaBackwards-5.12.1.jar
+        https://download.geysermc.org/v2/projects/geyser/versions/2.12.0/builds/1265/downloads/spigot
         https://download.geysermc.org/v2/projects/floodgate/versions/2.2.5/builds/141/downloads/spigot
         https://raw.githubusercontent.com/FelipeSNagel/nagel-world/main/config/craftlandia/NagelAliases.jar
         https://raw.githubusercontent.com/FelipeSNagel/nagel-world/main/config/craftlandia/NagelGestures.jar
